@@ -1,0 +1,16 @@
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\CappucareBackendApplication.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\config\DataLoader.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\controller\MovimientoController.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\controller\ProductoController.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\exception\ErrorResponse.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\exception\GlobalExceptionHandler.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\exception\RecursoNoEncontradoException.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\exception\StockInsuficienteException.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\model\Categoria.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\model\Movimiento.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\model\Producto.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\model\TipoMovimiento.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\repository\MovimientoRepository.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\repository\ProductoRepository.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\service\MovimientoService.java
+C:\Users\ignac\Desktop\Cappucare_SpringBoot\src\main\java\com\cappucare\backend\service\ProductoService.java

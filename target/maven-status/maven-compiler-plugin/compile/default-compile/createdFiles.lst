@@ -1,0 +1,16 @@
+com\cappucare\backend\exception\ErrorResponse.class
+com\cappucare\backend\CappucareBackendApplication.class
+com\cappucare\backend\exception\RecursoNoEncontradoException.class
+com\cappucare\backend\model\Categoria.class
+com\cappucare\backend\service\MovimientoService.class
+com\cappucare\backend\exception\StockInsuficienteException.class
+com\cappucare\backend\controller\MovimientoController.class
+com\cappucare\backend\model\Producto.class
+com\cappucare\backend\repository\MovimientoRepository.class
+com\cappucare\backend\repository\ProductoRepository.class
+com\cappucare\backend\controller\ProductoController.class
+com\cappucare\backend\model\TipoMovimiento.class
+com\cappucare\backend\config\DataLoader.class
+com\cappucare\backend\exception\GlobalExceptionHandler.class
+com\cappucare\backend\service\ProductoService.class
+com\cappucare\backend\model\Movimiento.class
