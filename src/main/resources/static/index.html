@@ -266,17 +266,19 @@
     gap:12px;align-items:center;
     background:rgba(255,255,255,0.025);border:1px solid var(--borde-vidrio);border-radius:14px;
     padding:12px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.3);
-    animation:entrar 0.5s ease both;
-    transition:var(--transicion);
+    transition:background 0.8s ease, border-color 0.8s ease, box-shadow 0.8s ease, transform 0.35s ease;
   }
   .mov-item:hover{transform:translateX(4px);border-color:rgba(255,255,255,0.15);}
+  .mov-item.entrar-anim{
+    animation:entrar 0.4s ease-out forwards;
+  }
   @keyframes entrar{
     from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}
   }
-  .mov-item.nuevo{box-shadow:0 0 0 3px rgba(44,76,56,0.25),0 6px 20px rgba(0,0,0,0.4);animation:destacar 1.8s ease;}
-  @keyframes destacar{
-    0%{background:rgba(44,76,56,0.2);border-color:var(--verde-neon);}
-    100%{background:rgba(255,255,255,0.025);border-color:var(--borde-vidrio);}
+  .mov-item.nuevo{
+    background:rgba(44,76,56,0.25);
+    border-color:var(--verde-neon);
+    box-shadow:0 0 0 3px rgba(44,76,56,0.25),0 6px 20px rgba(0,0,0,0.4);
   }
 
   .mov-id{font-size:11px;font-weight:800;color:var(--texto-suave);font-variant-numeric:tabular-nums;}
@@ -556,7 +558,7 @@
 
       function crearMovItemElement(m, esNuevo){
         const div = document.createElement('div');
-        div.className = 'mov-item' + (esNuevo ? ' nuevo' : '');
+        div.className = 'mov-item' + (esNuevo ? ' entrar-anim nuevo' : '');
         div.setAttribute('data-id', String(m.id));
 
         const tipoStr = m.tipo ? String(m.tipo).toUpperCase() : '';
@@ -582,6 +584,12 @@
           </div>
           <div class="mov-fecha">${formatearFecha(m.fechaHora)}</div>
         `;
+
+        if (esNuevo) {
+          setTimeout(() => { div.classList.remove('entrar-anim'); }, 450);
+          setTimeout(() => { div.classList.remove('nuevo'); }, 2000);
+        }
+
         return div;
       }
 
@@ -648,9 +656,15 @@
           const c = calcular();
 
           // KPIs
-          els.totalProductos.textContent = c.totalProductos;
-          els.movimientosHoy.textContent = c.totalHoy;
-          els.stockBajo.textContent = c.stockBajo;
+          if (els.totalProductos.textContent !== String(c.totalProductos)) {
+            els.totalProductos.textContent = c.totalProductos;
+          }
+          if (els.movimientosHoy.textContent !== String(c.totalHoy)) {
+            els.movimientosHoy.textContent = c.totalHoy;
+          }
+          if (els.stockBajo.textContent !== String(c.stockBajo)) {
+            els.stockBajo.textContent = c.stockBajo;
+          }
           if (c.stockBajo > 0) els.stockBajo.classList.add('valor-bajo');
           else els.stockBajo.classList.remove('valor-bajo');
 
@@ -671,18 +685,19 @@
 
           // Tabla de desempeño
           const tbody = els.tbodyDesempeno;
-          tbody.innerHTML = '';
           if (c.desempeño.length === 0) {
+            if (tbody.children.length > 0) tbody.innerHTML = '';
             els.emptyDesempeno.classList.remove('oculto');
             els.contTrabajadores.textContent = '0 trabajadores';
           } else {
             els.emptyDesempeno.classList.add('oculto');
             els.contTrabajadores.textContent = c.desempeño.length + ' trabajadores';
-            c.desempeño.forEach(e => {
-              const tr = document.createElement('tr');
+            const filasActuales = Array.from(tbody.children);
+            c.desempeño.forEach((e, idx) => {
               const tipoStr = e.ultimo && e.ultimo.tipo ? String(e.ultimo.tipo).toUpperCase() : '';
               const tipoUltimo = tipoStr === 'INGRESO' ? 'ing' : (tipoStr === 'SALIDA' ? 'sal' : '');
-              tr.innerHTML = `
+              const horaUltimo = e.ultimo ? formatearHoraCorto(e.ultimo.fechaHora) : '—';
+              const htmlFila = `
                 <td>
                   <div class="trabajador">${escapeHtml(e.nombre)}</div>
                   <span class="area">${tipoUltimo ? (tipoUltimo==='ing'?'&Uacute;ltimo: Ingreso':'&Uacute;ltimo: Salida') : '—'}</span>
@@ -690,10 +705,21 @@
                 <td><span class="num">${e.total}</span></td>
                 <td><span class="num num-ing">${e.entradas}</span></td>
                 <td><span class="num num-sal">${e.salidas}</span></td>
-                <td>${e.ultimo ? formatearHoraCorto(e.ultimo.fechaHora) : '—'}</td>
+                <td>${horaUltimo}</td>
               `;
-              tbody.appendChild(tr);
+              if (filasActuales[idx]) {
+                if (filasActuales[idx].innerHTML !== htmlFila) {
+                  filasActuales[idx].innerHTML = htmlFila;
+                }
+              } else {
+                const tr = document.createElement('tr');
+                tr.innerHTML = htmlFila;
+                tbody.appendChild(tr);
+              }
             });
+            while (tbody.children.length > c.desempeño.length) {
+              tbody.removeChild(tbody.lastChild);
+            }
           }
 
           // Feed de movimientos (solo hoy, más recientes primero)
@@ -701,7 +727,7 @@
           const hoyOrdenado = c.hoy.slice().sort((a,b) => (parseFecha(b.fechaHora)?.getTime()||0) - (parseFecha(a.fechaHora)?.getTime()||0));
 
           if (hoyOrdenado.length === 0) {
-            feed.innerHTML = '';
+            if (feed.children.length > 0) feed.innerHTML = '';
             els.feedEmpty.classList.remove('oculto');
             els.contFeed.textContent = '0 eventos';
             return;
