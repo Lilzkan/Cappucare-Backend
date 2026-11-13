@@ -466,27 +466,56 @@
       };
 
       /* ---------- Utilidades ---------- */
+      function parseFecha(ts){
+        if (ts == null || ts === '') return null;
+        if (ts instanceof Date) return isNaN(ts.getTime()) ? null : ts;
+        if (typeof ts === 'number') {
+          if (isNaN(ts)) return null;
+          return new Date(ts < 1e11 ? ts * 1000 : ts);
+        }
+        const str = String(ts).trim();
+        if (str === '') return null;
+        if (/^\d+$/.test(str)) {
+          const num = Number(str);
+          if (isNaN(num)) return null;
+          return new Date(num < 1e11 ? num * 1000 : num);
+        }
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
+      }
+
       function esHoy(ts){
-        if (ts == null) return false;
-        const d = typeof ts === 'number' ? new Date(ts) : new Date(String(ts));
-        if (isNaN(d.getTime())) return false;
+        const d = parseFecha(ts);
+        if (!d) return false;
         const hoy = new Date();
-        return d.toDateString() === hoy.toDateString();
+        return d.getFullYear() === hoy.getFullYear() &&
+               d.getMonth() === hoy.getMonth() &&
+               d.getDate() === hoy.getDate();
       }
 
       function formatearFecha(ts){
-        if (ts == null) return '—';
-        return new Date(ts).toLocaleString('es-ES', {
+        const d = parseFecha(ts);
+        if (!d) return '—';
+        return d.toLocaleString('es-ES', {
           day:'2-digit', month:'2-digit', year:'numeric',
           hour:'2-digit', minute:'2-digit', second:'2-digit'
         });
       }
 
       function formatearHoraCorto(ts){
-        if (ts == null) return '—';
-        return new Date(ts).toLocaleTimeString('es-ES', {
+        const d = parseFecha(ts);
+        if (!d) return '—';
+        return d.toLocaleTimeString('es-ES', {
           hour:'2-digit', minute:'2-digit', second:'2-digit'
         });
+      }
+
+      function obtenerNombreUsuario(m){
+        if (!m) return 'Sin asignar';
+        const val = m.usuarioResponsable ?? m.usuario_responsable ?? m.usuario ?? m.user ?? m.responsable;
+        if (val == null) return 'Sin asignar';
+        const str = String(val).trim();
+        return str !== '' ? str : 'Sin asignar';
       }
 
       function setEstado(conectado){
@@ -513,7 +542,7 @@
           totalProductos: productos.length,
           totalMovimientos: movimientos.length,
           muestraMovimiento: movimientos[0] || null,
-          usuarios: [...new Set(movimientos.map(m => m.usuarioResponsable))],
+          usuarios: [...new Set(movimientos.map(m => obtenerNombreUsuario(m)))],
         });
       }
 
@@ -536,38 +565,39 @@
         const hoy = movimientos.filter(m => esHoy(m.fechaHora));
 
         // Fallback: si no hay de hoy, usar los últimos 50 para que el desempeño no quede vacío
-        const paraDesempeño = hoy.length > 0 ? hoy : movimientos.slice().sort((a,b) => (b.fechaHora||0)-(a.fechaHora||0)).slice(0, 50);
+        const paraDesempeño = hoy.length > 0 ? hoy : movimientos.slice().sort((a,b) => (parseFecha(b.fechaHora)?.getTime()||0) - (parseFecha(a.fechaHora)?.getTime()||0)).slice(0, 50);
         const paraFeed = hoy;
 
-        const entradas = paraDesempeño.filter(m => m.tipo === 'INGRESO').length;
-        const salidas = paraDesempeño.filter(m => m.tipo === 'SALIDA').length;
         const totalHoy = paraFeed.length;
+        const entradas = paraFeed.filter(m => m.tipo && String(m.tipo).toUpperCase() === 'INGRESO').length;
+        const salidas = paraFeed.filter(m => m.tipo && String(m.tipo).toUpperCase() === 'SALIDA').length;
 
         // Desempeño por trabajador
         const porTrabajador = new Map();
         paraDesempeño.forEach(m => {
-          const u = (m.usuarioResponsable && m.usuarioResponsable.trim() !== '') ? m.usuarioResponsable : 'Sin asignar';
+          const u = obtenerNombreUsuario(m);
           if (!porTrabajador.has(u)) {
             porTrabajador.set(u, { nombre: u, total: 0, entradas: 0, salidas: 0, ultimo: null });
           }
           const e = porTrabajador.get(u);
           e.total += 1;
-          if (m.tipo === 'INGRESO') e.entradas += 1;
+          const tipoUpper = m.tipo ? String(m.tipo).toUpperCase() : '';
+          if (tipoUpper === 'INGRESO') e.entradas += 1;
           else e.salidas += 1;
-          if (e.ultimo == null || (m.fechaHora || 0) > (e.ultimo.fechaHora || 0)) {
+          const tsM = parseFecha(m.fechaHora)?.getTime() || 0;
+          const tsUltimo = e.ultimo ? (parseFecha(e.ultimo.fechaHora)?.getTime() || 0) : 0;
+          if (e.ultimo == null || tsM > tsUltimo) {
             e.ultimo = m;
           }
         });
         const desempeño = Array.from(porTrabajador.values())
-          .sort((a,b) => b.total - a.total || (b.ultimo && a.ultimo ? (b.ultimo.fechaHora||0)-(a.ultimo.fechaHora||0) : 0));
+          .sort((a,b) => b.total - a.total || ((parseFecha(b.ultimo?.fechaHora)?.getTime()||0) - (parseFecha(a.ultimo?.fechaHora)?.getTime()||0)));
 
         // Distribución %
         let pEntradas = 0, pSalidas = 0;
         if (totalHoy > 0) {
-          const entradasHoy = paraFeed.filter(m => m.tipo === 'INGRESO').length;
-          const salidasHoy = paraFeed.filter(m => m.tipo === 'SALIDA').length;
-          pEntradas = Math.round((entradasHoy / totalHoy) * 100);
-          pSalidas = Math.round((salidasHoy / totalHoy) * 100);
+          pEntradas = Math.round((entradas / totalHoy) * 100);
+          pSalidas = Math.round((salidas / totalHoy) * 100);
           if (pEntradas + pSalidas !== 100) {
             pSalidas = 100 - pEntradas;
           }
@@ -619,7 +649,8 @@
             els.contTrabajadores.textContent = c.desempeño.length + ' trabajadores';
             c.desempeño.forEach(e => {
               const tr = document.createElement('tr');
-              const tipoUltimo = e.ultimo ? (e.ultimo.tipo === 'INGRESO' ? 'ing' : 'sal') : '';
+              const tipoStr = e.ultimo && e.ultimo.tipo ? String(e.ultimo.tipo).toUpperCase() : '';
+              const tipoUltimo = tipoStr === 'INGRESO' ? 'ing' : (tipoStr === 'SALIDA' ? 'sal' : '');
               tr.innerHTML = `
                 <td>
                   <div class="trabajador">${escapeHtml(e.nombre)}</div>
@@ -636,7 +667,7 @@
 
           // Feed de movimientos (solo hoy, más recientes primero)
           const feed = els.feedMovimientos;
-          const hoyOrdenado = c.hoy.slice().sort((a,b) => (b.fechaHora||0) - (a.fechaHora||0));
+          const hoyOrdenado = c.hoy.slice().sort((a,b) => (parseFecha(b.fechaHora)?.getTime()||0) - (parseFecha(a.fechaHora)?.getTime()||0));
 
           // Detectar items nuevos para resaltar
           const nuevos = hoyOrdenado.filter(m => !idsVistos.has(m.id));
@@ -653,14 +684,15 @@
 
           feed.innerHTML = hoyOrdenado.map(m => {
             const esNuevo = nuevos.some(n => n.id === m.id) ? ' mov-item nuevo' : '';
-            const tipo = m.tipo === 'INGRESO' ? 'INGRESO' : 'SALIDA';
-            const icono = m.tipo === 'INGRESO' ? '&#127794;' : '&#128308;';
-            const claseTipo = m.tipo === 'INGRESO' ? 'badge-ing' : 'badge-sal';
-            const textoTipo = m.tipo === 'INGRESO' ? 'Ingreso' : 'Salida';
+            const tipoStr = m.tipo ? String(m.tipo).toUpperCase() : '';
+            const esIngreso = tipoStr === 'INGRESO';
+            const icono = esIngreso ? '&#127794;' : '&#128308;';
+            const claseTipo = esIngreso ? 'badge-ing' : 'badge-sal';
+            const textoTipo = esIngreso ? 'Ingreso' : 'Salida';
             const prodId = escapeHtml(m.productoId || '—');
             const prodNombre = escapeHtml(m.productoNombre || 'Producto sin nombre');
             const motivo = escapeHtml(m.motivo || '—');
-            const usuario = escapeHtml(m.usuarioResponsable || '—');
+            const usuario = escapeHtml(obtenerNombreUsuario(m));
             return `
               <div class="mov-item${esNuevo}" data-id="${m.id}">
                 <div class="mov-id">#${m.id}</div>
