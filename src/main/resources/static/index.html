@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Cappucare — Panel de Administración en Tiempo Real</title>
+<style>
+  /* ============================
+     Diseño y paleta Cappucare
+     Verde Bosque & Eco
+     ============================ */
+  :root{
+    --verde-principal:#2C4C38;
+    --verde-principal-oscuro:#1E3728;
+    --menta:#E8F0EC;
+    --fondo:#F7F8F5;
+    --rojo-alerta:#A63A2B;
+    --rojo-alerta-claro:#F6E3DE;
+    --texto:#2B332E;
+    --texto-suave:#5C6B60;
+    --borde:#D8DECF;
+    --blanco:#FFFFFF;
+    --sombra:0 4px 12px rgba(44,76,56,0.08);
+    --sombra-card:0 8px 24px rgba(44,76,56,0.06);
+    --radius:14px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--fondo);
+    color:var(--texto);
+    line-height:1.5;
+    min-height:100vh;
+  }
+
+  /* ---------- Topbar ---------- */
+  .topbar{
+    background:linear-gradient(135deg,var(--verde-principal) 0%,var(--verde-principal-oscuro) 100%);
+    color:var(--blanco);
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
+    box-shadow:0 2px 10px rgba(44,76,56,0.12);
+    position:sticky;
+    top:0;
+    z-index:50;
+  }
+
+  .brand{display:flex;align-items:center;gap:14px;flex:1;min-width:240px;}
+  .badge{
+    width:40px;height:40px;
+    border-radius:10px;
+    background:var(--menta);
+    color:var(--verde-principal);
+    display:grid;place-items:center;
+    font-weight:800;
+    letter-spacing:0.5px;
+    font-size:14px;
+    box-shadow:inset 0 0 0 1px rgba(44,76,56,0.15);
+  }
+  .brand h1{font-size:20px;font-weight:700;letter-spacing:-0.4px;}
+  .brand .sub{font-size:12px;color:#BFD5CA;display:block;margin-top:2px;}
+
+  .chip.live{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:7px 14px;border-radius:999px;
+    background:rgba(232,240,236,0.25);
+    color:#D8F3E2;
+    border:1px solid rgba(232,240,236,0.45);
+    font-size:12px;font-weight:700;
+    animation:pulse 2.5s infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1;}
+    50%{opacity:0.7;}
+  }
+  .dot-live{
+    width:8px;height:8px;border-radius:50%;background:#4ADE80;
+    box-shadow:0 0 8px #4ADE80;
+    animation:blink 1.2s infinite;
+  }
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+  .meta{display:flex;align-items:center;gap:10px;flex-shrink:0;min-width:200px;}
+  .pill{
+    display:flex;align-items:center;gap:7px;
+    padding:8px 14px;border-radius:10px;
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.25);
+    color:var(--menta);
+    font-size:12.5px;font-weight:600;
+    backdrop-filter:blur(4px);
+  }
+  .status-dot{
+    width:7px;height:7px;border-radius:50%;
+    background:#34D399;box-shadow:0 0 6px #34D399;
+  }
+  .status-dot.off{background:#EF4444;box-shadow:0 0 6px #EF4444;}
+
+  /* ---------- Layout ---------- */
+  .container{max-width:1360px;margin:24px auto;padding:0 20px;}
+
+  .kpis{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+    margin-bottom:26px;
+  }
+
+  /* ---------- KPI Cards ---------- */
+  .card{
+    background:var(--blanco);
+    border:1px solid var(--borde);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:var(--sombra-card);
+    display:flex;flex-direction:column;gap:8px;
+    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+  }
+  .card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(44,76,56,0.10);border-color:#C6D2B7;}
+  .card.kpi:hover{border-color:var(--borde);}
+
+  .kpi-tag{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:4px 10px;border-radius:999px;
+    font-size:11px;font-weight:800;
+    letter-spacing:0.4px;text-transform:uppercase;
+  }
+  .tag-verde{background:#D9EADF;color:var(--verde-principal);border:1px solid #BFD5CA;}
+  .tag-menta{background:var(--menta);color:var(--verde-principal-oscuro);border:1px solid var(--borde);}
+  .tag-rojo{background:var(--rojo-alerta-claro);color:var(--rojo-alerta);border:1px solid #E3C0B8;}
+
+  .kpi-label{font-size:12px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.4px;}
+  .kpi-value{font-size:34px;font-weight:800;color:var(--texto);line-height:1.1;}
+  .kpi-sub{font-size:12.5px;color:var(--texto-suave);}
+
+  .valor-bajo{color:var(--rojo-alerta);font-weight:800;}
+
+  /* Tarjeta 4: distribución */
+  .dist-wrap{margin-top:6px;}
+  .progreso-wrap{
+    width:100%;height:14px;background:#E4EADF;border-radius:7px;
+    overflow:hidden;border:1px solid var(--borde);margin-top:8px;
+  }
+  .progreso{height:100%;display:flex;transition:width .5s ease;}
+  .progreso-seg{height:100%;}
+  .progreso-seg.ingress{background:var(--verde-principal);}
+  .progreso-seg.egress{background:var(--rojo-alerta);}
+  .progreso-leyenda{
+    display:flex;justify-content:space-between;margin-top:8px;font-size:12px;font-weight:700;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;}
+  .dot.ingress{background:var(--verde-principal);box-shadow:0 0 6px var(--verde-principal);}
+  .dot.egress{background:var(--rojo-alerta);box-shadow:0 0 6px var(--rojo-alerta);}
+
+  /* ---------- Paneles ---------- */
+  .dashboard-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+  @media (max-width:900px){
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .dashboard-grid{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--blanco);
+    border:1px solid var(--borde);
+    border-radius:var(--radius);
+    box-shadow:var(--sombra-card);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .panel-head{
+    padding:16px 20px;
+    border-bottom:1px solid var(--borde);
+    background:linear-gradient(180deg,#FFFFFF 0%,#FCFDFB 100%);
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .panel-head h2{
+    font-size:16px;font-weight:700;letter-spacing:-0.3px;
+    color:var(--texto);display:flex;align-items:center;gap:8px;
+  }
+  .panel-head .contador{
+    font-size:12px;color:var(--texto-suave);background:var(--menta);
+    padding:4px 10px;border-radius:6px;border:1px solid var(--borde);font-weight:700;
+  }
+
+  /* ---------- Tabla desempeño ---------- */
+  .table-wrap{overflow:auto;padding:0;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{
+    background:#F2F5EE;color:var(--texto-suave);font-weight:700;
+    text-align:left;padding:12px 16px;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;
+    border-bottom:1px solid var(--borde);white-space:nowrap;
+  }
+  td{padding:12px 16px;border-bottom:1px solid #EEF1EA;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover{background:#FCFEFB;}
+
+  .trabajador{font-weight:700;color:var(--texto);}
+  .area{font-size:11.5px;color:var(--texto-suave);display:block;margin-top:2px;}
+  .num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--texto);}
+  .num-ing{color:var(--verde-principal);}
+  .num-sal{color:var(--rojo-alerta);}
+
+  .badge-tipo{
+    display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;
+    font-size:11px;font-weight:800;
+  }
+  .badge-ing{background:#D9EADF;color:var(--verde-principal);border:1px solid #BFD5CA;}
+  .badge-sal{background:var(--rojo-alerta-claro);color:var(--rojo-alerta);border:1px solid #E3C0B8;}
+
+  /* ---------- Feed de movimientos ---------- */
+  .feed-list{
+    display:flex;flex-direction:column;gap:9px;padding:14px 16px;overflow-y:auto;
+    max-height:62vh;
+  }
+  .mov-item{
+    display:grid;grid-template-columns:44px 1fr 110px 140px 130px;
+    gap:10px;align-items:center;
+    background:#FFFFFF;border:1px solid var(--borde);border-radius:10px;
+    padding:10px 12px;box-shadow:0 1px 3px rgba(44,76,56,0.04);
+    animation:entrar .42s ease both;
+  }
+  @keyframes entrar{
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .mov-item.nuevo{box-shadow:0 0 0 3px rgba(44,76,56,0.18),0 4px 14px rgba(44,76,56,0.08);animation:destacar 1.6s ease;}
+  @keyframes destacar{
+    0%{background:#F0F7F2;border-color:var(--verde-principal);}
+    100%{background:#FFFFFF;border-color:var(--borde);}
+  }
+
+  .mov-id{font-size:11.5px;font-weight:800;color:var(--texto-suave);font-variant-numeric:tabular-nums;}
+  .mov-tipo{font-weight:800;font-size:12px;}
+  .mov-prod{font-weight:700;color:var(--texto);}
+  .mov-prod-id{font-size:11.5px;color:var(--texto-suave);font-variant-numeric:tabular-nums;display:block;margin-top:2px;}
+  .mov-cant{font-variant-numeric:tabular-nums;font-weight:700;color:var(--texto);}
+  .mov-motivo{font-size:12.5px;color:var(--texto-suave);white-space:normal;overflow-wrap:break-word;}
+  .mov-user{font-size:12.5px;color:var(--texto);font-weight:600;}
+  .mov-fecha{font-size:11.5px;color:var(--texto-suave);font-variant-numeric:tabular-nums;text-align:right;}
+
+  .empty{
+    grid-column:1/-1;padding:36px 16px;text-align:center;color:var(--texto-suave);
+    font-size:14px;border:1px dashed var(--borde);border-radius:10px;background:#FCFDFB;
+  }
+
+  /* ---------- Footer ---------- */
+  footer{
+    margin:30px 0 60px;padding:0 20px;
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+    font-size:12px;color:var(--texto-suave);
+  }
+  .separador{border-top:1px solid var(--borde);flex:1;min-width:140px;}
+
+  /* ---------- Utilidades ---------- */
+  .oculto{display:none !important;}
+  .text-rojo{color:var(--rojo-alerta);}
+  .text-verde{color:var(--verde-principal);}
+  .fw-7{font-weight:700;}
+</style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="badge">C</div>
+      <div>
+        <h1>Panel de Administración</h1>
+        <span class="sub">Cappucare &bull; Inventario y Movimientos Clínicos</span>
+      </div>
+      <span class="chip live"><span class="dot-live" aria-label="en vivo"></span>EN VIVO</span>
+    </div>
+    <div class="meta">
+      <div class="pill">
+        <span class="status-dot" id="dotEstado"></span>
+        <span id="txtEstado">Conectando&hellip;</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- ===== KPIs ===== -->
+    <section class="kpis" id="kpis">
+
+      <!-- Tarjeta 1: Total insumos -->
+      <article class="card">
+        <div class="kpi-tag tag-verde">&#127795; Cat&aacute;logo</div>
+        <div class="kpi-label">Total de Insumos en Cat&aacute;logo</div>
+        <div class="kpi-value" id="kpiTotalProductos">0</div>
+        <div class="kpi-sub">Productos disponibles en el inventario</div>
+      </article>
+
+      <!-- Tarjeta 2: Movimientos hoy -->
+      <article class="card">
+        <div class="kpi-tag tag-menta">&#128197; Hoy</div>
+        <div class="kpi-label">Movimientos Registrados Hoy</div>
+        <div class="kpi-value" id="kpiMovimientosHoy">0</div>
+        <div class="kpi-sub">Transacciones recibidas de la app m&oacute;vil</div>
+      </article>
+
+      <!-- Tarjeta 3: Alertas stock bajo -->
+      <article class="card">
+        <div class="kpi-tag tag-rojo">&#x26A0; Stock</div>
+        <div class="kpi-label">Alertas de Stock Bajo</div>
+        <div class="kpi-value valor-bajo" id="kpiStockBajo">0</div>
+        <div class="kpi-sub">Insumos con cantidad disponible &le; m&iacute;nimo</div>
+      </article>
+
+      <!-- Tarjeta 4: Distribución operaciones -->
+      <article class="card">
+        <div class="kpi-tag tag-menta">&#128200; Operaciones</div>
+        <div class="kpi-label">Distribuci&oacute;n de Operaciones Hoy</div>
+        <div class="kpi-value" id="kpiDistribucion">—</div>
+        <div class="dist-wrap">
+          <div class="progreso-wrap" id="progresoWrap" aria-label="Distribucion entradas vs salidas">
+            <div class="progreso" id="barraProgreso">
+              <div class="progreso-seg ingress" id="segEntradas" style="width:0%"></div>
+              <div class="progreso-seg egress" id="segSalidas" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="progreso-leyenda">
+            <span><span class="dot ingress"></span><span id="lblEntradas">Entradas 0%</span></span>
+            <span><span class="dot egress"></span><span id="lblSalidas">Salidas 0%</span></span>
+          </div>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- ===== Dashboard: Desempeño + Feed ===== -->
+    <section class="dashboard-grid">
+
+      <!-- Tabla de desempeño por trabajador -->
+      <article class="panel">
+        <div class="panel-head">
+          <h2>&#128100; Desempe&ntilde;o por Trabajador</h2>
+          <span class="contador" id="contTrabajadores">0 trabajadores</span>
+        </div>
+        <div class="table-wrap">
+          <table id="tablaDesempeno">
+            <thead>
+              <tr>
+                <th style="width:34%">Trabajador</th>
+                <th style="width:14%">Operaciones</th>
+                <th style="width:14%">Entradas</th>
+                <th style="width:14%">Salidas</th>
+                <th style="width:24%">&Uacute;ltimo Movimiento</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyDesempeno"></tbody>
+          </table>
+        </div>
+        <div id="emptyDesempeno" class="empty" style="padding:26px 16px;">Sin movimientos registrados hoy.</div>
+      </article>
+
+      <!-- Feed de movimientos en tiempo real -->
+      <article class="panel">
+        <div class="panel-head">
+          <h2>&#128247; Feed de Movimientos en Tiempo Real</h2>
+          <span class="contador" id="contFeed">0 eventos</span>
+        </div>
+        <div id="feedMovimientos" class="feed-list"></div>
+        <div id="feedEmpty" class="empty oculto">Sin movimiento
+s en el historial.</div>
+      </article>
+
+    </section>
+  </div>
+
+  <footer>
+    <div id="ultimaSync">Última sincronización: —</div>
+    <div class="separador" aria-hidden="true"></div>
+    <div>Cappucare Backend &bull; Actualizaci&oacute;n autom&aacute;tica cada 2 segundos</div>
+  </footer>
+
+  <script>
+    /* ============================
+       Live Admin Dashboard — Cappucare
+       No modifica endpoints REST existentes.
+       ============================ */
+    (function(){
+      const API_PRODUCTOS = '/api/productos';
+      const API_MOVIMIENTOS = '/api/movimientos';
+      const POLL_MS = 2000;
+
+      // Estado
+      let productos = [];
+      let movimientos = [];
+      let idsVistos = new Set();        // IDs de movimientos ya renderizados
+      let ultimoRenderTs = null;        // timestamp del último render del feed
+
+      // Elementos DOM
+      const els = {
+        totalProductos: document.getElementById('kpiTotalProductos'),
+        movimientosHoy: document.getElementById('kpiMovimientosHoy'),
+        stockBajo: document.getElementById('kpiStockBajo'),
+        distribucion: document.getElementById('kpiDistribucion'),
+        barraProgreso: document.getElementById('barraProgreso'),
+        segEntradas: document.getElementById('segEntradas'),
+        segSalidas: document.getElementById('segSalidas'),
+        lblEntradas: document.getElementById('lblEntradas'),
+        lblSalidas: document.getElementById('lblSalidas'),
+        tbodyDesempeno: document.getElementById('tbodyDesempeno'),
+        contTrabajadores: document.getElementById('contTrabajadores'),
+        emptyDesempeno: document.getElementById('emptyDesempeno'),
+        feedMovimientos: document.getElementById('feedMovimientos'),
+        feedEmpty: document.getElementById('feedEmpty'),
+        contFeed: document.getElementById('contFeed'),
+        dotEstado: document.getElementById('dotEstado'),
+        txtEstado: document.getElementById('txtEstado'),
+        ultimaSync: document.getElementById('ultimaSync'),
+      };
+
+      // Categorías en español
+      const NOM_CATEGORIA = {
+        DESCARTABLES: 'Descartables',
+        CURACION: 'Curación',
+        EQUIPAMIENTO: 'Equipamiento',
+        MEDICAMENTOS: 'Medicamentos',
+        PROTECCION: 'Protección',
+      };
+
+      /* ---------- Utilidades ---------- */
+      function esHoy(ts){
+        if (ts == null) return false;
+        const d = new Date(ts);
+        const hoy = new Date();
+        return d.toDateString() === hoy.toDateString();
+      }
+
+      function formatearFecha(ts){
+        if (ts == null) return '—';
+        return new Date(ts).toLocaleString('es-ES', {
+          day:'2-digit', month:'2-digit', year:'numeric',
+          hour:'2-digit', minute:'2-digit', second:'2-digit'
+        });
+    }
+
+      function formatearHoraCorto(ts){
+        if (ts == null) return '—';
+        return new Date(ts).toLocaleTimeString('es-ES', {
+          hour:'2-digit', minute:'2-digit', second:'2-digit'
+        });
+      }
+
+      function setEstado(conectado){
+        if (conectado){
+          els.dotEstado.classList.remove('off');
+          els.txtEstado.textContent = 'Conectado al servidor';
+          els.dotEstado.title = 'online';
+        } else {
+          els.dotEstado.classList.add('off');
+          els.txtEstado.textContent = 'Sin conexi&oacute;n — reintentando';
+          els.txtEstado.title = 'offline';
+        }
+      }
+
+      function setUltimaSync(){
+        const ahora = new Date();
+        els.ultimaSync.textContent = 'Última sincronización: ' +
+          ahora.toLocaleString('es-ES', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      }
+
+      /* ---------- Cálculos ---------- */
+      function calcular(){
+        const totalProductos = productos.length;
+        const stockBajo = productos.filter(p =>
+          (p.cantidadDisponible == null ? 0 : p.cantidadDisponible) <=
+          (p.stockMinimo == null ? 0 : p.stockMinimo)
+        ).length;
+
+        const hoy = movimientos.filter(m => esHoy(m.fechaHora));
+        const entradas = hoy.filter(m => m.tipo === 'INGRESO').length;
+        const salidas = hoy.filter(m => m.tipo === 'SALIDA').length;
+        const totalHoy = hoy.length;
+
+        // Desempeño por trabajador (hoy)
+        const porTrabajador = new Map();
+        hoy.forEach(m => {
+          const u = m.usuarioResponsable || 'Desconocido';
+          if (!porTrabajador.has(u)) {
+            porTrabajador.set(u, { nombre: u, total: 0, entradas: 0, salidas: 0, ultimo: null });
+          }
+          const e = porTrabajador.get(u);
+          e.total += 1;
+          if (m.tipo === 'INGRESO') e.entradas += 1;
+          else e.salidas += 1;
+          if (e.ultimo == null || (m.fechaHora || 0) > (e.ultimo.fechaHora || 0)) {
+            e.ultimo = m;
+          }
+        });
+        const desempeo = Array.from(porTrabajador.values())
+          .sort((a,b) => b.total - a.total || (b.ultimo && a.ultimo ? (b.ultimo.fechaHora||0)-(a.ultimo.fechaHora||0) : 0));
+
+        // Distribución %
+        let pEntradas = 0, pSalidas = 0;
+        if (totalHoy > 0) {
+          pEntradas = Math.round((entradas / totalHoy) * 100);
+          pSalidas = Math.round((salidas / totalHoy) * 100);
+          // Ajuste para que sume 100
+          if (pEntradas + pSalidas !== 100) {
+            pSalidas = 100 - pEntradas;
+          }
+        }
+
+        return {
+          totalProductos, stockBajo,
+          totalHoy, entradas, salidas,
+          pEntradas, pSalidas,
+          desempeo, hoy
+        };
+      }
+
+      /* ---------- Render ---------- */
+      function render(){
+        const c = calcular();
+
+        // KPIs
+        els.totalProductos.textContent = c.totalProductos;
+        els.movimientosHoy.textContent = c.totalHoy;
+        els.stockBajo.textContent = c.stockBajo;
+        if (c.stockBajo > 0) els.stockBajo.classList.add('valor-bajo');
+        else els.stockBajo.classList.remove('valor-bajo');
+
+        // Distribución (tarjeta 4)
+        if (c.totalHoy > 0) {
+          els.distribucion.textContent = c.totalHoy + ' operaciones';
+          els.segEntradas.style.width = c.pEntradas + '%';
+          els.segSalidas.style.width = c.pSalidas + '%';
+          els.lblEntradas.textContent = 'Entradas ' + c.pEntradas + '%';
+          els.lblSalidas.textContent = 'Salidas ' + c.pSalidas + '%';
+        } else {
+          els.distribucion.textContent = '—';
+          els.segEntradas.style.width = '0%';
+          els.segSalidas.style.width = '0%';
+          els.lblEntradas.textContent = 'Entradas 0%';
+          els.lblSalidas.textContent = 'Salidas 0%';
+        }
+
+        // Tabla de desempeño
+        const tbody = els.tbodyDesempeno;
+        tbody.innerHTML = '';
+        if (c.desempeño.length === 0) {
+          els.emptyDesempeno.classList.remove('oculto');
+          els.contTrabajadores.textContent = '0 trabajadores';
+        } else {
+          els.emptyDesempeno.classList.add('oculto');
+          els.contTrabajadores.textContent = c.desempeño.length + ' trabajadores';
+          c.desempeño.forEach(e => {
+            const tr = document.createElement('tr');
+            const tipoUltimo = e.ultimo ? (e.ultimo.tipo === 'INGRESO' ? 'ing' : 'sal') : '';
+            tr.innerHTML = `
+              <td>
+                <div class="trabajador">${escapeHtml(e.nombre)}</div>
+                <span class="area">${tipoUltimo ? (tipoUltimo==='ing'?'Último: Ingreso':'Último: Salida') : '—'}</span>
+              </td>
+              <td><span class="num">${e.total}</span></td>
+              <td><span class="num num-ing">${e.entradas}</span></td>
+              <td><span class="num num-sal">${e.salidas}</span></td>
+              <td>${e.ultimo ? formatearHoraCorto(e.ultimo.fechaHora) : '—'}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        // Feed de movimientos (solo hoy, más recientes primero)
+        const feed = els.feedMovimientos;
+        const hoyOrdenado = c.hoy.slice().sort((a,b) => (b.fechaHora||0) - (a.fechaHora||0));
+
+        // Detectar items nuevos para resaltar
+        const idsHoy = new Set(hoyOrdenado.map(m => m.id));
+        const nuevos = hoyOrdenado.filter(m => !idsVistos.has(m.id));
+        hoyOrdenado.forEach(m => idsVistos.add(m.id));
+
+        if (hoyOrdenado.length === 0) {
+          feed.innerHTML = '';
+          els.feedEmpty.classList.remove('oculto');
+          els.contFeed.textContent = '0 eventos';
+          return;
+        }
+        els.feedEmpty.classList.add('oculto');
+        els.contFeed.textContent = hoyOrdenado.length + ' eventos';
+
+        // Solo re-render si cambió algo para no perder foco/scroll innecesario;
+        // construimos el HTML completo del feed (cantidad moderada).
+        feed.innerHTML = hoyOrdenado.map(m => {
+          const esNuevo = nuevos.some(n => n.id === m.id) ? ' mov-item nuevo' : '';
+          const tipo = m.tipo === 'INGRESO' ? 'INGRESO' : 'SALIDA';
+          const icono = m.tipo === 'INGRESO' ? '🟢' : '🔴';
+          const claseTipo = m.tipo === 'INGRESO' ? 'badge-ing' : 'badge-sal';
+          const textoTipo = m.tipo === 'INGRESO' ? 'Ingreso' : 'Salida';
+          const prodId = escapeHtml(m.productoId || '—');
+          const prodNombre = escapeHtml(m.productoNombre || 'Producto sin nombre');
+          const motivo = escapeHtml(m.motivo || '—');
+          const usuario = escapeHtml(m.usuarioResponsable || '—');
+          return `
+            <div class="mov-item${esNuevo}" data-id="${m.id}">
+              <div class="mov-id">#${m.id}</div>
+              <div>
+                <div class="mov-prod">${prodNombre}<span class="mov-prod-id">ID ${prodId}</span></div>
+              </div>
+              <div class="mov-cant">${m.cantidad}</div>
+              <div class="mov-motivo">${motivo}</div>
+              <div>
+                <div class="mov-user">${usuario}</div>
+                <span class="badge-tipo ${claseTipo}">${icono} ${textoTipo}</span>
+              </div>
+              <div class="mov-fecha">${formatearFecha(m.fechaHora)}</div>
+            </div>
+          `;
+        }).join('');
+
+        // Eliminar animación "nuevo" tras un rato
+        setTimeout(()=>{
+          feed.querySelectorAll('.mov-item.nuevo').forEach(el=>{
+            el.classList.remove('nuevo');
+          });
+        }, 1800);
+      }
+
+      /* ---------- Escape HTML ---------- */
+      function escapeHtml(txt){
+        if (txt == null) return '';
+        const div = document.createElement('div');
+        div.textContent = String(txt);
+        return div.innerHTML;
+      }
+
+      /* ---------- Polling ---------- */
+      async function cargarDatos(){
+        try {
+          const [respP, respM] = await Promise.all([
+            fetch(API_PRODUCTOS, {cache:'no-store'}),
+            fetch(API_MOVIMIENTOS, {cache:'no-store'})
+          ]);
+          if (!respP.ok || !respM.ok) throw new Error('Respuesta no OK');
+          productos = await respP.json();
+          movimientos = await respM.json();
+          setEstado(true);
+          setUltimaSync();
+          render();
+        } catch (err){
+          console.error('[Cappucare Dashboard] Error cargando datos:', err);
+          setEstado(false);
+          // No renderizar para conservar última vista válida
+        }
+      }
+
+      // Inicio
+      cargarDatos();
+      setInterval(cargarDatos, POLL_MS);
+
+    })();
+  </script>
+</body>
+</html>
