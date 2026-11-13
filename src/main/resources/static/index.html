@@ -435,8 +435,18 @@ s en el historial.</div>
       function esHoy(ts){
         if (ts == null) return false;
         const d = new Date(ts);
+        if (isNaN(d.getTime())) return false;
         const hoy = new Date();
         return d.toDateString() === hoy.toDateString();
+      }
+
+      function debugDatos(tag, productos, movimientos){
+        if (window.__cappucareDebug !== true) return;
+        console.log(`[Cappucare Debug] ${tag}:`, {
+          totalProductos: productos.length,
+          totalMovimientos: movimientos.length,
+          muestraMovimiento: movimientos[0] || null,
+        });
       }
 
       function formatearFecha(ts){
@@ -488,7 +498,7 @@ s en el historial.</div>
         // Desempeño por trabajador (hoy)
         const porTrabajador = new Map();
         hoy.forEach(m => {
-          const u = m.usuarioResponsable || 'Desconocido';
+          const u = m.usuarioResponsable || 'Sin asignar';
           if (!porTrabajador.has(u)) {
             porTrabajador.set(u, { nombre: u, total: 0, entradas: 0, salidas: 0, ultimo: null });
           }
@@ -500,7 +510,7 @@ s en el historial.</div>
             e.ultimo = m;
           }
         });
-        const desempeo = Array.from(porTrabajador.values())
+        const desempeño = Array.from(porTrabajador.values())
           .sort((a,b) => b.total - a.total || (b.ultimo && a.ultimo ? (b.ultimo.fechaHora||0)-(a.ultimo.fechaHora||0) : 0));
 
         // Distribución %
@@ -518,7 +528,7 @@ s en el historial.</div>
           totalProductos, stockBajo,
           totalHoy, entradas, salidas,
           pEntradas, pSalidas,
-          desempeo, hoy
+          desempeño, hoy
         };
       }
 
@@ -647,6 +657,7 @@ s en el historial.</div>
           if (!respP.ok || !respM.ok) throw new Error('Respuesta no OK');
           productos = await respP.json();
           movimientos = await respM.json();
+          debugDatos('cargarDatos', productos, movimientos);
           setEstado(true);
           setUltimaSync();
           render();
