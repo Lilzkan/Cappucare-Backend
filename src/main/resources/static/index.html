@@ -434,7 +434,7 @@ s en el historial.</div>
       /* ---------- Utilidades ---------- */
       function esHoy(ts){
         if (ts == null) return false;
-        const d = new Date(ts);
+        const d = typeof ts === 'number' ? new Date(ts) : new Date(String(ts));
         if (isNaN(d.getTime())) return false;
         const hoy = new Date();
         return d.toDateString() === hoy.toDateString();
@@ -446,6 +446,7 @@ s en el historial.</div>
           totalProductos: productos.length,
           totalMovimientos: movimientos.length,
           muestraMovimiento: movimientos[0] || null,
+          usuarios: [...new Set(movimientos.map(m => m.usuarioResponsable))],
         });
       }
 
@@ -491,14 +492,19 @@ s en el historial.</div>
         ).length;
 
         const hoy = movimientos.filter(m => esHoy(m.fechaHora));
-        const entradas = hoy.filter(m => m.tipo === 'INGRESO').length;
-        const salidas = hoy.filter(m => m.tipo === 'SALIDA').length;
-        const totalHoy = hoy.length;
 
-        // Desempeño por trabajador (hoy)
+        // Si no hay movimientos de hoy, usar los últimos 50 movimientos como fallback
+        const paraDesempeño = hoy.length > 0 ? hoy : movimientos.slice().sort((a,b) => (b.fechaHora||0)-(a.fechaHora||0)).slice(0, 50);
+        const paraFeed = hoy;
+
+        const entradas = paraDesempeño.filter(m => m.tipo === 'INGRESO').length;
+        const salidas = paraDesempeño.filter(m => m.tipo === 'SALIDA').length;
+        const totalHoy = paraFeed.length;
+
+        // Desempeño por trabajador
         const porTrabajador = new Map();
-        hoy.forEach(m => {
-          const u = m.usuarioResponsable || 'Sin asignar';
+        paraDesempeño.forEach(m => {
+          const u = (m.usuarioResponsable && m.usuarioResponsable.trim() !== '') ? m.usuarioResponsable : 'Sin asignar';
           if (!porTrabajador.has(u)) {
             porTrabajador.set(u, { nombre: u, total: 0, entradas: 0, salidas: 0, ultimo: null });
           }
@@ -516,9 +522,10 @@ s en el historial.</div>
         // Distribución %
         let pEntradas = 0, pSalidas = 0;
         if (totalHoy > 0) {
-          pEntradas = Math.round((entradas / totalHoy) * 100);
-          pSalidas = Math.round((salidas / totalHoy) * 100);
-          // Ajuste para que sume 100
+          const entradasHoy = paraFeed.filter(m => m.tipo === 'INGRESO').length;
+          const salidasHoy = paraFeed.filter(m => m.tipo === 'SALIDA').length;
+          pEntradas = Math.round((entradasHoy / totalHoy) * 100);
+          pSalidas = Math.round((salidasHoy / totalHoy) * 100);
           if (pEntradas + pSalidas !== 100) {
             pSalidas = 100 - pEntradas;
           }
@@ -528,115 +535,121 @@ s en el historial.</div>
           totalProductos, stockBajo,
           totalHoy, entradas, salidas,
           pEntradas, pSalidas,
-          desempeño, hoy
+          desempeño, hoy: paraFeed
         };
       }
 
       /* ---------- Render ---------- */
       function render(){
-        const c = calcular();
+        try {
+          const c = calcular();
 
-        // KPIs
-        els.totalProductos.textContent = c.totalProductos;
-        els.movimientosHoy.textContent = c.totalHoy;
-        els.stockBajo.textContent = c.stockBajo;
-        if (c.stockBajo > 0) els.stockBajo.classList.add('valor-bajo');
-        else els.stockBajo.classList.remove('valor-bajo');
+          // KPIs
+          els.totalProductos.textContent = c.totalProductos;
+          els.movimientosHoy.textContent = c.totalHoy;
+          els.stockBajo.textContent = c.stockBajo;
+          if (c.stockBajo > 0) els.stockBajo.classList.add('valor-bajo');
+          else els.stockBajo.classList.remove('valor-bajo');
 
-        // Distribución (tarjeta 4)
-        if (c.totalHoy > 0) {
-          els.distribucion.textContent = c.totalHoy + ' operaciones';
-          els.segEntradas.style.width = c.pEntradas + '%';
-          els.segSalidas.style.width = c.pSalidas + '%';
-          els.lblEntradas.textContent = 'Entradas ' + c.pEntradas + '%';
-          els.lblSalidas.textContent = 'Salidas ' + c.pSalidas + '%';
-        } else {
-          els.distribucion.textContent = '—';
-          els.segEntradas.style.width = '0%';
-          els.segSalidas.style.width = '0%';
-          els.lblEntradas.textContent = 'Entradas 0%';
-          els.lblSalidas.textContent = 'Salidas 0%';
-        }
+          // Distribución (tarjeta 4)
+          if (c.totalHoy > 0) {
+            els.distribucion.textContent = c.totalHoy + ' operaciones';
+            els.segEntradas.style.width = c.pEntradas + '%';
+            els.segSalidas.style.width = c.pSalidas + '%';
+            els.lblEntradas.textContent = 'Entradas ' + c.pEntradas + '%';
+            els.lblSalidas.textContent = 'Salidas ' + c.pSalidas + '%';
+          } else {
+            els.distribucion.textContent = '—';
+            els.segEntradas.style.width = '0%';
+            els.segSalidas.style.width = '0%';
+            els.lblEntradas.textContent = 'Entradas 0%';
+            els.lblSalidas.textContent = 'Salidas 0%';
+          }
 
-        // Tabla de desempeño
-        const tbody = els.tbodyDesempeno;
-        tbody.innerHTML = '';
-        if (c.desempeño.length === 0) {
-          els.emptyDesempeno.classList.remove('oculto');
-          els.contTrabajadores.textContent = '0 trabajadores';
-        } else {
-          els.emptyDesempeno.classList.add('oculto');
-          els.contTrabajadores.textContent = c.desempeño.length + ' trabajadores';
-          c.desempeño.forEach(e => {
-            const tr = document.createElement('tr');
-            const tipoUltimo = e.ultimo ? (e.ultimo.tipo === 'INGRESO' ? 'ing' : 'sal') : '';
-            tr.innerHTML = `
-              <td>
-                <div class="trabajador">${escapeHtml(e.nombre)}</div>
-                <span class="area">${tipoUltimo ? (tipoUltimo==='ing'?'Último: Ingreso':'Último: Salida') : '—'}</span>
-              </td>
-              <td><span class="num">${e.total}</span></td>
-              <td><span class="num num-ing">${e.entradas}</span></td>
-              <td><span class="num num-sal">${e.salidas}</span></td>
-              <td>${e.ultimo ? formatearHoraCorto(e.ultimo.fechaHora) : '—'}</td>
+          // Tabla de desempeño
+          const tbody = els.tbodyDesempeno;
+          tbody.innerHTML = '';
+          if (c.desempeño.length === 0) {
+            els.emptyDesempeno.classList.remove('oculto');
+            els.contTrabajadores.textContent = '0 trabajadores';
+          } else {
+            els.emptyDesempeno.classList.add('oculto');
+            els.contTrabajadores.textContent = c.desempeño.length + ' trabajadores';
+            c.desempeño.forEach(e => {
+              const tr = document.createElement('tr');
+              const tipoUltimo = e.ultimo ? (e.ultimo.tipo === 'INGRESO' ? 'ing' : 'sal') : '';
+              tr.innerHTML = `
+                <td>
+                  <div class="trabajador">${escapeHtml(e.nombre)}</div>
+                  <span class="area">${tipoUltimo ? (tipoUltimo==='ing'?'Último: Ingreso':'Último: Salida') : '—'}</span>
+                </td>
+                <td><span class="num">${e.total}</span></td>
+                <td><span class="num num-ing">${e.entradas}</span></td>
+                <td><span class="num num-sal">${e.salidas}</span></td>
+                <td>${e.ultimo ? formatearHoraCorto(e.ultimo.fechaHora) : '—'}</td>
+              `;
+              tbody.appendChild(tr);
+            });
+          }
+
+          // Feed de movimientos (solo hoy, más recientes primero)
+          const feed = els.feedMovimientos;
+          const hoyOrdenado = c.hoy.slice().sort((a,b) => (b.fechaHora||0) - (a.fechaHora||0));
+
+          // Detectar items nuevos para resaltar
+          const nuevos = hoyOrdenado.filter(m => !idsVistos.has(m.id));
+          hoyOrdenado.forEach(m => idsVistos.add(m.id));
+
+          if (hoyOrdenado.length === 0) {
+            feed.innerHTML = '';
+            els.feedEmpty.classList.remove('oculto');
+            els.contFeed.textContent = '0 eventos';
+            return;
+          }
+          els.feedEmpty.classList.add('oculto');
+          els.contFeed.textContent = hoyOrdenado.length + ' eventos';
+
+          feed.innerHTML = hoyOrdenado.map(m => {
+            const esNuevo = nuevos.some(n => n.id === m.id) ? ' mov-item nuevo' : '';
+            const tipo = m.tipo === 'INGRESO' ? 'INGRESO' : 'SALIDA';
+            const icono = m.tipo === 'INGRESO' ? '🟢' : '🔴';
+            const claseTipo = m.tipo === 'INGRESO' ? 'badge-ing' : 'badge-sal';
+            const textoTipo = m.tipo === 'INGRESO' ? 'Ingreso' : 'Salida';
+            const prodId = escapeHtml(m.productoId || '—');
+            const prodNombre = escapeHtml(m.productoNombre || 'Producto sin nombre');
+            const motivo = escapeHtml(m.motivo || '—');
+            const usuario = escapeHtml(m.usuarioResponsable || '—');
+            return `
+              <div class="mov-item${esNuevo}" data-id="${m.id}">
+                <div class="mov-id">#${m.id}</div>
+                <div>
+                  <div class="mov-prod">${prodNombre}<span class="mov-prod-id">ID ${prodId}</span></div>
+                </div>
+                <div class="mov-cant">${m.cantidad}</div>
+                <div class="mov-motivo">${motivo}</div>
+                <div>
+                  <div class="mov-user">${usuario}</div>
+                  <span class="badge-tipo ${claseTipo}">${icono} ${textoTipo}</span>
+                </div>
+                <div class="mov-fecha">${formatearFecha(m.fechaHora)}</div>
+              </div>
             `;
-            tbody.appendChild(tr);
-          });
+          }).join('');
+
+          // Eliminar animación "nuevo" tras un rato
+          setTimeout(()=>{
+            feed.querySelectorAll('.mov-item.nuevo').forEach(el=>{
+              el.classList.remove('nuevo');
+            });
+          }, 1800);
+
+        } catch (err){
+          console.error('[Cappucare Dashboard] Error en render():', err);
+          // Mostrar error visible en la tabla de desempeño
+          const tbody = els.tbodyDesempeno;
+          tbody.innerHTML = '<tr><td colspan="5" style="color:var(--rojo-alerta);text-align:center;padding:20px;">Error renderizando desempeño: ' + escapeHtml(err.message) + '</td></tr>';
+          els.emptyDesempeno.classList.add('oculto');
         }
-
-        // Feed de movimientos (solo hoy, más recientes primero)
-        const feed = els.feedMovimientos;
-        const hoyOrdenado = c.hoy.slice().sort((a,b) => (b.fechaHora||0) - (a.fechaHora||0));
-
-        // Detectar items nuevos para resaltar
-        const idsHoy = new Set(hoyOrdenado.map(m => m.id));
-        const nuevos = hoyOrdenado.filter(m => !idsVistos.has(m.id));
-        hoyOrdenado.forEach(m => idsVistos.add(m.id));
-
-        if (hoyOrdenado.length === 0) {
-          feed.innerHTML = '';
-          els.feedEmpty.classList.remove('oculto');
-          els.contFeed.textContent = '0 eventos';
-          return;
-        }
-        els.feedEmpty.classList.add('oculto');
-        els.contFeed.textContent = hoyOrdenado.length + ' eventos';
-
-        // Solo re-render si cambió algo para no perder foco/scroll innecesario;
-        // construimos el HTML completo del feed (cantidad moderada).
-        feed.innerHTML = hoyOrdenado.map(m => {
-          const esNuevo = nuevos.some(n => n.id === m.id) ? ' mov-item nuevo' : '';
-          const tipo = m.tipo === 'INGRESO' ? 'INGRESO' : 'SALIDA';
-          const icono = m.tipo === 'INGRESO' ? '🟢' : '🔴';
-          const claseTipo = m.tipo === 'INGRESO' ? 'badge-ing' : 'badge-sal';
-          const textoTipo = m.tipo === 'INGRESO' ? 'Ingreso' : 'Salida';
-          const prodId = escapeHtml(m.productoId || '—');
-          const prodNombre = escapeHtml(m.productoNombre || 'Producto sin nombre');
-          const motivo = escapeHtml(m.motivo || '—');
-          const usuario = escapeHtml(m.usuarioResponsable || '—');
-          return `
-            <div class="mov-item${esNuevo}" data-id="${m.id}">
-              <div class="mov-id">#${m.id}</div>
-              <div>
-                <div class="mov-prod">${prodNombre}<span class="mov-prod-id">ID ${prodId}</span></div>
-              </div>
-              <div class="mov-cant">${m.cantidad}</div>
-              <div class="mov-motivo">${motivo}</div>
-              <div>
-                <div class="mov-user">${usuario}</div>
-                <span class="badge-tipo ${claseTipo}">${icono} ${textoTipo}</span>
-              </div>
-              <div class="mov-fecha">${formatearFecha(m.fechaHora)}</div>
-            </div>
-          `;
-        }).join('');
-
-        // Eliminar animación "nuevo" tras un rato
-        setTimeout(()=>{
-          feed.querySelectorAll('.mov-item.nuevo').forEach(el=>{
-            el.classList.remove('nuevo');
-          });
-        }, 1800);
       }
 
       /* ---------- Escape HTML ---------- */
