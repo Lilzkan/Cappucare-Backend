@@ -4,454 +4,631 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>Cappucare — Panel de Administración en Tiempo Real</title>
+<title>Cappucare — Panel de Administración Clínico</title>
 <style>
   /* ============================
-     Cappucare — Dark Glassmorphism
-     Estilo inspirado en Nexora Glassmorphism SaaS Dashboard
-     Paleta: Verde Bosque #2C4C38, Menta #E8F0EC, Fondo #F7F8F5, Rojo #A63A2B
+     Cappucare — Panel Clínico Profesional
+     Estilo: Médico Limpio, Claro y Pulcro
+     Paleta: Verde Bosque #2C4C38, Fondo #F7F8F5, Blanco #FFFFFF, Texto #1A2E22, Acentos #3B7A57, Alerta #D9534F
      ============================ */
-  :root{
-    --verde-principal:#2C4C38;
-    --verde-principal-oscuro:#1E3728;
-    --verde-neon:#4ADE80;
-    --menta:#E8F0EC;
-    --menta-suave:#BFD5CA;
-    --fondo:#0B120F;
-    --fondo-secundario:#121A15;
-    --rojo-alerta:#A63A2B;
-    --rojo-alerta-neon:#EF4444;
-    --rojo-alerta-claro:#2E1A15;
-    --texto:#F3F7F3;
-    --texto-suave:#9FB3A5;
-    --borde-vidrio:rgba(255,255,255,0.08);
-    --borde-vidrio-fuerte:rgba(255,255,255,0.18);
-    --blanco:#FFFFFF;
-    --sombra-vidrio:0 8px 32px rgba(0,0,0,0.45);
-    --radius:20px;
-    --transicion:all 0.35s cubic-bezier(0.4,0,0.2,1);
+  :root {
+    --verde-bosque: #2C4C38;
+    --verde-oscuro: #1E3728;
+    --verde-claro: #E8F0EC;
+    --verde-acento: #3B7A57;
+    --verde-neon: #22C55E;
+    --fondo-clinico: #F7F8F5;
+    --blanco: #FFFFFF;
+    --texto-principal: #1A2E22;
+    --texto-secundario: #5A7365;
+    --borde-suave: #E2E8E4;
+    --rojo-alerta: #D9534F;
+    --rojo-fondo: #FDF2F2;
+    --sombra-suave: 0 2px 12px rgba(44, 76, 56, 0.08);
+    --sombra-hover: 0 6px 20px rgba(44, 76, 56, 0.12);
+    --radius: 12px;
+    --transicion: all 0.25s ease;
   }
 
-  *{box-sizing:border-box;margin:0;padding:0;}
-  html{scroll-behavior:smooth;}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
 
-  body{
-    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,sans-serif;
-    background:
-      radial-gradient(circle at 15% 20%, rgba(44,76,56,0.18) 0%, transparent 45%),
-      radial-gradient(circle at 85% 80%, rgba(166,58,43,0.10) 0%, transparent 45%),
-      linear-gradient(180deg,#0A0F0B 0%,#0B120F 55%,#0E1611 100%);
-    color:var(--texto);
-    line-height:1.55;
-    min-height:100vh;
-    overflow-x:hidden;
+  body {
+    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--fondo-clinico);
+    color: var(--texto-principal);
+    line-height: 1.5;
+    min-height: 100vh;
   }
 
   /* ---------- Topbar ---------- */
-  .topbar{
-    backdrop-filter:blur(20px) saturate(180%);
-    -webkit-backdrop-filter:blur(20px) saturate(180%);
-    background:rgba(11,15,11,0.65);
-    border-bottom:1px solid var(--borde-vidrio);
-    color:var(--texto);
-    padding:16px 28px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:16px;
-    position:sticky;
-    top:0;
-    z-index:100;
-    box-shadow:var(--sombra-vidrio);
+  .topbar {
+    background-color: var(--blanco);
+    border-bottom: 1px solid var(--borde-suave);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   }
 
-  .brand{display:flex;align-items:center;gap:14px;flex:1;min-width:250px;}
-  .badge{
-    width:42px;height:42px;
-    border-radius:14px;
-    background:linear-gradient(135deg,var(--verde-principal) 0%,#1B3224 100%);
-    color:var(--blanco);
-    display:grid;place-items:center;
-    font-weight:800;
-    letter-spacing:0.5px;
-    font-size:15px;
-    border:1px solid rgba(255,255,255,0.12);
-    box-shadow:0 0 20px rgba(44,76,56,0.35),inset 0 0 0 1px rgba(255,255,255,0.2);
-  }
-  .brand h1{font-size:19px;font-weight:700;letter-spacing:-0.4px;color:var(--texto);}
-  .brand .sub{font-size:11.5px;color:var(--menta-suave);display:block;margin-top:1px;}
-
-  .chip.live{
-    display:inline-flex;align-items:center;gap:8px;
-    padding:7px 16px;border-radius:999px;
-    background:rgba(44,76,56,0.25);
-    color:#B9ECC4;
-    border:1px solid rgba(74,222,128,0.35);
-    font-size:12px;font-weight:700;
-    box-shadow:0 0 14px rgba(74,222,128,0.15);
-    animation:pulse 3s infinite;
-  }
-  @keyframes pulse{
-    0%,100%{opacity:1;}
-    50%{opacity:0.75;}
-  }
-  .dot-live{
-    width:8px;height:8px;border-radius:50%;background:var(--verde-neon);
-    box-shadow:0 0 10px var(--verde-neon);
-    animation:blink 1.4s infinite;
-  }
-  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
-
-  .meta{display:flex;align-items:center;gap:10px;flex-shrink:0;min-width:210px;}
-  .pill{
-    display:flex;align-items:center;gap:8px;
-    padding:8px 16px;border-radius:12px;
-    background:rgba(255,255,255,0.04);
-    border:1px solid var(--borde-vidrio);
-    color:var(--menta-suave);
-    font-size:12px;font-weight:600;
-    backdrop-filter:blur(8px);
-  }
-  .status-dot{
-    width:7px;height:7px;border-radius:50%;
-    background:var(--verde-neon);box-shadow:0 0 8px var(--verde-neon);
-  }
-  .status-dot.off{background:var(--rojo-alerta-neon);box-shadow:0 0 8px var(--rojo-alerta-neon);}
-
-  /* ---------- Layout ---------- */
-  .container{max-width:1400px;margin:28px auto;padding:0 24px;}
-
-  .kpis{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:18px;
-    margin-bottom:30px;
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
   }
 
-  /* ---------- KPI Cards Glass ---------- */
-  .card{
-    position:relative;
-    background:rgba(255,255,255,0.03);
-    border:1px solid var(--borde-vidrio);
-    border-radius:var(--radius);
-    padding:22px;
-    backdrop-filter:blur(16px) saturate(150%);
-    -webkit-backdrop-filter:blur(16px) saturate(150%);
-    box-shadow:var(--sombra-vidrio);
-    display:flex;flex-direction:column;gap:10px;
-    transition:var(--transicion);
-    overflow:hidden;
-  }
-  .card::before{
-    content:'';
-    position:absolute;top:0;left:0;right:0;height:1.5px;
-    background:linear-gradient(90deg,transparent,rgba(74,222,128,0.5),transparent);
-    opacity:0;transition:var(--transicion);
-  }
-  .card:hover{
-    transform:translateY(-4px);
-    border-color:rgba(74,222,128,0.35);
-    box-shadow:0 12px 40px rgba(0,0,0,0.55),0 0 24px rgba(44,76,56,0.15);
-  }
-  .card:hover::before{opacity:1;}
-  .card.kpi:hover{border-color:var(--borde-vidrio);}
-
-  .kpi-tag{
-    display:inline-flex;align-items:center;gap:7px;
-    padding:5px 12px;border-radius:999px;
-    font-size:11px;font-weight:800;
-    letter-spacing:0.4px;text-transform:uppercase;
-    border:1px solid rgba(255,255,255,0.1);
-    backdrop-filter:blur(4px);
-  }
-  .tag-verde{background:rgba(44,76,56,0.35);color:var(--verde-neon);border-color:rgba(74,222,128,0.35);}
-  .tag-menta{background:rgba(232,240,236,0.1);color:var(--menta-suave);border-color:rgba(232,240,236,0.25);}
-  .tag-rojo{background:rgba(166,58,43,0.3);color:var(--rojo-alerta-neon);border-color:rgba(239,68,68,0.35);}
-
-  .kpi-label{font-size:12px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.4px;}
-  .kpi-value{font-size:32px;font-weight:800;color:var(--texto);line-height:1.1;letter-spacing:-0.5px;}
-  .kpi-sub{font-size:12px;color:var(--texto-suave);}
-
-  .valor-bajo{color:var(--rojo-alerta-neon);font-weight:800;}
-
-  /* Tarjeta 4: distribución */
-  .dist-wrap{margin-top:8px;}
-  .progreso-wrap{
-    width:100%;height:12px;background:rgba(255,255,255,0.06);border-radius:6px;
-    overflow:hidden;border:1px solid rgba(255,255,255,0.08);margin-top:8px;
-  }
-  .progreso{height:100%;display:flex;transition:width 0.6s ease;}
-  .progreso-seg{height:100%;}
-  .progreso-seg.ingress{background:linear-gradient(90deg,#2C4C38,#4ADE80);}
-  .progreso-seg.egress{background:linear-gradient(90deg,#A63A2B,#EF4444);}
-  .progreso-leyenda{
-    display:flex;justify-content:space-between;margin-top:10px;font-size:12px;font-weight:700;
-  }
-  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:7px;}
-  .dot.ingress{background:var(--verde-neon);box-shadow:0 0 8px var(--verde-neon);}
-  .dot.egress{background:var(--rojo-alerta-neon);box-shadow:0 0 8px var(--rojo-alerta-neon);}
-
-  /* ---------- Paneles ---------- */
-  .dashboard-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-  }
-  @media (max-width:980px){
-    .kpis{grid-template-columns:repeat(2,1fr);}
-    .dashboard-grid{grid-template-columns:1fr;}
-  }
-  @media (max-width:480px){
-    .kpis{grid-template-columns:1fr;}
+  .logo-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--verde-bosque) 0%, var(--verde-oscuro) 100%);
+    color: var(--blanco);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 18px;
+    box-shadow: 0 4px 10px rgba(44,76,56,0.2);
   }
 
-  .panel{
-    background:rgba(255,255,255,0.025);
-    border:1px solid var(--borde-vidrio);
-    border-radius:var(--radius);
-    box-shadow:var(--sombra-vidrio);
-    display:flex;flex-direction:column;
-    overflow:hidden;
-    backdrop-filter:blur(12px);
-    -webkit-backdrop-filter:blur(12px);
-  }
-  .panel-head{
-    padding:18px 22px;
-    border-bottom:1px solid var(--borde-vidrio);
-    background:linear-gradient(180deg,rgba(255,255,255,0.03) 0%,rgba(255,255,255,0.01) 100%);
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-  }
-  .panel-head h2{
-    font-size:15px;font-weight:700;letter-spacing:-0.3px;
-    color:var(--texto);display:flex;align-items:center;gap:8px;
-  }
-  .panel-head .contador{
-    font-size:12px;color:var(--menta-suave);background:rgba(232,240,236,0.08);
-    padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);font-weight:700;
+  .brand h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--verde-bosque);
+    letter-spacing: -0.3px;
   }
 
-  /* ---------- Tabla desempeño ---------- */
-  .table-wrap{overflow:auto;padding:0;}
-  table{width:100%;border-collapse:collapse;font-size:13.5px;}
-  th{
-    background:rgba(255,255,255,0.03);color:var(--texto-suave);font-weight:700;
-    text-align:left;padding:14px 18px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;
-    border-bottom:1px solid var(--borde-vidrio);white-space:nowrap;
-  }
-  td{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
-  tr:last-child td{border-bottom:none;}
-  tr:hover{background:rgba(255,255,255,0.03);}
-
-  .trabajador{font-weight:700;color:var(--texto);}
-  .area{font-size:11.5px;color:var(--texto-suave);display:block;margin-top:2px;}
-  .num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--texto);}
-  .num-ing{color:var(--verde-neon);}
-  .num-sal{color:var(--rojo-alerta-neon);}
-
-  .badge-tipo{
-    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;
-    font-size:11px;font-weight:800;
-  }
-  .badge-ing{background:rgba(44,76,56,0.35);color:var(--verde-neon);border:1px solid rgba(74,222,128,0.35);}
-  .badge-sal{background:rgba(166,58,43,0.3);color:var(--rojo-alerta-neon);border:1px solid rgba(239,68,68,0.35);}
-
-  /* ---------- Feed de movimientos ---------- */
-  .feed-list{
-    display:flex;flex-direction:column;gap:10px;padding:18px 22px;overflow-y:auto;
-    max-height:70vh;
-  }
-  .mov-item{
-    display:grid;grid-template-columns:44px 1fr 110px 150px 140px;
-    gap:12px;align-items:center;
-    background:rgba(255,255,255,0.025);border:1px solid var(--borde-vidrio);border-radius:14px;
-    padding:12px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.3);
-    transition:background 0.8s ease, border-color 0.8s ease, box-shadow 0.8s ease, transform 0.35s ease;
-  }
-  .mov-item:hover{transform:translateX(4px);border-color:rgba(255,255,255,0.15);}
-  .mov-item.entrar-anim{
-    animation:entrar 0.4s ease-out forwards;
-  }
-  @keyframes entrar{
-    from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}
-  }
-  .mov-item.nuevo{
-    background:rgba(44,76,56,0.25);
-    border-color:var(--verde-neon);
-    box-shadow:0 0 0 3px rgba(44,76,56,0.25),0 6px 20px rgba(0,0,0,0.4);
+  .brand .sub {
+    font-size: 12px;
+    color: var(--texto-secundario);
+    display: block;
   }
 
-  .mov-id{font-size:11px;font-weight:800;color:var(--texto-suave);font-variant-numeric:tabular-nums;}
-  .mov-tipo{font-weight:800;font-size:12px;}
-  .mov-prod{font-weight:700;color:var(--texto);}
-  .mov-prod-id{font-size:11px;color:var(--texto-suave);font-variant-numeric:tabular-nums;display:block;margin-top:2px;}
-  .mov-cant{font-variant-numeric:tabular-nums;font-weight:700;color:var(--texto);}
-  .mov-motivo{font-size:12.5px;color:var(--texto-suave);white-space:normal;overflow-wrap:break-word;}
-  .mov-user{font-size:12.5px;color:var(--texto);font-weight:600;}
-  .mov-fecha{font-size:11px;color:var(--texto-suave);font-variant-numeric:tabular-nums;text-align:right;}
-
-  .empty{
-    grid-column:1/-1;padding:40px 20px;text-align:center;color:var(--texto-suave);
-    font-size:14px;border:1px dashed rgba(255,255,255,0.08);border-radius:14px;background:rgba(255,255,255,0.02);
+  .meta-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background-color: var(--verde-claro);
+    color: var(--verde-bosque);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .dot-live {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--verde-neon);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--texto-secundario);
+    background: #F1F5F2;
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--verde-neon);
+  }
+  .status-dot.off { background-color: var(--rojo-alerta); }
+
+  /* ---------- Main Container ---------- */
+  .container {
+    max-width: 1400px;
+    margin: 28px auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- KPIs ---------- */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .card {
+    background-color: var(--blanco);
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radius);
+    padding: 22px;
+    box-shadow: var(--sombra-suave);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: var(--transicion);
+  }
+
+  .card:hover {
+    box-shadow: var(--sombra-hover);
+    transform: translateY(-2px);
+  }
+
+  .kpi-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--texto-secundario);
+  }
+
+  .kpi-value {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--verde-bosque);
+    line-height: 1.1;
+  }
+
+  .kpi-value.alerta {
+    color: var(--rojo-alerta);
+  }
+
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--texto-secundario);
+  }
+
+  /* Progreso distribución */
+  .dist-wrap { margin-top: 4px; }
+  .progreso-wrap {
+    width: 100%; height: 10px; background-color: #EFEFEF; border-radius: 5px; overflow: hidden; margin-top: 8px;
+    display: flex;
+  }
+  .progreso-seg { height: 100%; transition: width 0.4s ease; }
+  .progreso-seg.ingress { background-color: var(--verde-neon); }
+  .progreso-seg.egress { background-color: var(--rojo-alerta); }
+  .progreso-leyenda {
+    display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--texto-secundario);
+  }
+
+  /* ---------- Sección de Secciones (Grid principal) ---------- */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 30px;
+  }
+
+  @media (max-width: 1024px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 540px) {
+    .kpis { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background-color: var(--blanco);
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radius);
+    box-shadow: var(--sombra-suave);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-head {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--borde-suave);
+    background-color: #FAFAFA;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .panel-head h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--verde-bosque);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .contador {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--texto-secundario);
+    background: var(--verde-claro);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+
+  /* ---------- Tabla Común ---------- */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+  th {
+    background-color: #F8F9F8;
+    color: var(--texto-secundario);
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--borde-suave);
+    white-space: nowrap;
+  }
+  td {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--borde-suave);
+    color: var(--texto-principal);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background-color: #FAFCFB; }
+
+  .num { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .num-ing { color: #15803D; }
+  .num-sal { color: var(--rojo-alerta); }
+
+  /* ---------- Feed de Movimientos ---------- */
+  .feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 20px;
+    max-height: 450px;
+    overflow-y: auto;
+  }
+
+  .mov-item {
+    display: grid;
+    grid-template-columns: 40px 1fr 90px 130px 110px;
+    gap: 10px;
+    align-items: center;
+    background: #FAFAFA;
+    border: 1px solid var(--borde-suave);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    transition: var(--transicion);
+  }
+
+  .mov-item.entrar-anim {
+    animation: entrar 0.35s ease-out forwards;
+  }
+  @keyframes entrar {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .mov-item.nuevo {
+    background-color: #F0FDF4;
+    border-color: #86EFAC;
+  }
+
+  .mov-id { font-weight: 700; color: var(--texto-secundario); font-size: 11px; }
+  .mov-prod { font-weight: 700; color: var(--texto-principal); }
+  .mov-prod-id { font-size: 11px; color: var(--texto-secundario); display: block; }
+  .mov-cant { font-weight: 700; text-align: right; }
+  .mov-user { font-weight: 600; color: var(--verde-bosque); }
+  .mov-fecha { font-size: 11px; color: var(--texto-secundario); text-align: right; }
+
+  .badge-tipo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-ing { background: #DCFCE7; color: #166534; }
+  .badge-sal { background: #FEE2E2; color: #991B1B; }
+
+  /* ---------- Inventario con Buscador y Filtros ---------- */
+  .panel-full {
+    background-color: var(--blanco);
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radius);
+    box-shadow: var(--sombra-suave);
+    margin-bottom: 30px;
+    overflow: hidden;
+  }
+
+  .toolbar {
+    padding: 16px 22px;
+    background-color: #FAFAFA;
+    border-bottom: 1px solid var(--borde-suave);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 260px;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 9px 14px 9px 36px;
+    border: 1px solid var(--borde-suave);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    background: var(--blanco);
+    transition: var(--transicion);
+  }
+
+  .search-box input:focus {
+    border-color: var(--verde-acento);
+    box-shadow: 0 0 0 3px rgba(44,76,56,0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--texto-secundario);
+    font-size: 14px;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--borde-suave);
+    background: var(--blanco);
+    color: var(--texto-secundario);
+    cursor: pointer;
+    transition: var(--transicion);
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    background-color: var(--verde-bosque);
+    color: var(--blanco);
+    border-color: var(--verde-bosque);
+  }
+
+  .stock-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .stock-ok { background: #E6F4EA; color: #137333; }
+  .stock-bajo { background: var(--rojo-fondo); color: var(--rojo-alerta); }
+
+  .empty {
+    padding: 30px;
+    text-align: center;
+    color: var(--texto-secundario);
+    font-size: 13px;
+  }
+
+  .oculto { display: none !important; }
 
   /* ---------- Footer ---------- */
-  footer{
-    margin:40px 0 70px;padding:0 24px;
-    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;
-    font-size:12px;color:var(--texto-suave);
+  footer {
+    margin: 30px 0 50px;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--texto-secundario);
   }
-  .separador{border-top:1px solid rgba(255,255,255,0.06);flex:1;min-width:160px;}
 
-  /* ---------- Utilidades ---------- */
-  .oculto{display:none !important;}
-  .text-rojo{color:var(--rojo-alerta-neon);}
-  .text-verde{color:var(--verde-neon);}
-  .fw-7{font-weight:700;}
-  .glow-verde{box-shadow:0 0 24px rgba(74,222,128,0.2);}
+  .separador { border-top: 1px solid var(--borde-suave); flex: 1; }
 
-  /* Scrollbar oscuro */
-  ::-webkit-scrollbar{width:8px;height:8px;}
-  ::-webkit-scrollbar-track{background:transparent;}
-  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px;}
-  ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.2);}
+  /* Scrollbars limpios */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D1D8D4; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #B0BDB7; }
 </style>
 </head>
 <body>
 
   <header class="topbar">
     <div class="brand">
-      <div class="badge">C</div>
+      <div class="logo-badge">C</div>
       <div>
-        <h1>Panel de Administración</h1>
-        <span class="sub">Cappucare &bull; Inventario y Movimientos Clínicos</span>
+        <h1>Cappucare &bull; Panel Clínico</h1>
+        <span class="sub">Gestión de Inventario y Trazabilidad en Tiempo Real</span>
       </div>
-      <span class="chip live"><span class="dot-live" aria-label="en vivo"></span>EN VIVO</span>
     </div>
-    <div class="meta">
-      <div class="pill">
+    <div class="meta-top">
+      <span class="live-badge"><span class="dot-live"></span> EN VIVO</span>
+      <div class="status-pill">
         <span class="status-dot" id="dotEstado"></span>
-        <span id="txtEstado">Conectando&hellip;</span>
+        <span id="txtEstado">Conectando...</span>
       </div>
     </div>
   </header>
 
   <div class="container">
-    <!-- ===== KPIs ===== -->
-    <section class="kpis" id="kpis">
 
-      <!-- Tarjeta 1: Total insumos -->
-      <article class="card">
-        <div class="kpi-tag tag-verde">&#127795; Cat&aacute;logo</div>
-        <div class="kpi-label">Total de Insumos en Cat&aacute;logo</div>
+    <!-- ===== 4 TARJETAS KPI ===== -->
+    <section class="kpis">
+      <div class="card">
+        <span class="kpi-tag">&#128230; Catálogo</span>
+        <div class="kpi-label" style="font-size:12px; color:var(--texto-secundario); font-weight:600;">Total Insumos</div>
         <div class="kpi-value" id="kpiTotalProductos">0</div>
-        <div class="kpi-sub">Productos disponibles en el inventario</div>
-      </article>
+        <span class="kpi-sub">Insumos registrados en sistema</span>
+      </div>
 
-      <!-- Tarjeta 2: Movimientos hoy -->
-      <article class="card">
-        <div class="kpi-tag tag-menta">&#128197; Hoy</div>
-        <div class="kpi-label">Movimientos Registrados Hoy</div>
+      <div class="card">
+        <span class="kpi-tag">&#128197; Actividad Hoy</span>
+        <div class="kpi-label" style="font-size:12px; color:var(--texto-secundario); font-weight:600;">Movimientos del Día</div>
         <div class="kpi-value" id="kpiMovimientosHoy">0</div>
-        <div class="kpi-sub">Transacciones recibidas de la app m&oacute;vil</div>
-      </article>
+        <span class="kpi-sub">Transacciones de entradas y salidas</span>
+      </div>
 
-      <!-- Tarjeta 3: Alertas stock bajo -->
-      <article class="card">
-        <div class="kpi-tag tag-rojo">&#x26A0; Stock</div>
-        <div class="kpi-label">Alertas de Stock Bajo</div>
-        <div class="kpi-value valor-bajo" id="kpiStockBajo">0</div>
-        <div class="kpi-sub">Insumos con cantidad disponible &le; m&iacute;nimo</div>
-      </article>
+      <div class="card">
+        <span class="kpi-tag">&#9888;&#65039; Alertas</span>
+        <div class="kpi-label" style="font-size:12px; color:var(--texto-secundario); font-weight:600;">Stock Bajo</div>
+        <div class="kpi-value alerta" id="kpiStockBajo">0</div>
+        <span class="kpi-sub">Insumos con cantidad &le; mínimo</span>
+      </div>
 
-      <!-- Tarjeta 4: Distribución operaciones -->
-      <article class="card">
-        <div class="kpi-tag tag-menta">&#128200; Operaciones</div>
-        <div class="kpi-label">Distribuci&oacute;n de Operaciones Hoy</div>
-        <div class="kpi-value" id="kpiDistribucion">—</div>
+      <div class="card">
+        <span class="kpi-tag">&#128200; Operaciones</span>
+        <div class="kpi-label" style="font-size:12px; color:var(--texto-secundario); font-weight:600;">Entradas vs Salidas</div>
+        <div class="kpi-value" id="kpiDistribucion" style="font-size:22px; margin-top:2px;">—</div>
         <div class="dist-wrap">
-          <div class="progreso-wrap" id="progresoWrap" aria-label="Distribucion entradas vs salidas">
-            <div class="progreso" id="barraProgreso">
-              <div class="progreso-seg ingress" id="segEntradas" style="width:0%"></div>
-              <div class="progreso-seg egress" id="segSalidas" style="width:0%"></div>
-            </div>
+          <div class="progreso-wrap">
+            <div class="progreso-seg ingress" id="segEntradas" style="width:0%"></div>
+            <div class="progreso-seg egress" id="segSalidas" style="width:0%"></div>
           </div>
           <div class="progreso-leyenda">
-            <span><span class="dot ingress"></span><span id="lblEntradas">Entradas 0%</span></span>
-            <span><span class="dot egress"></span><span id="lblSalidas">Salidas 0%</span></span>
+            <span id="lblEntradas">Entradas 0%</span>
+            <span id="lblSalidas">Salidas 0%</span>
           </div>
         </div>
-      </article>
-
+      </div>
     </section>
 
-    <!-- ===== Dashboard: Desempeño + Feed ===== -->
+    <!-- ===== GRID: Desempeño + Feed ===== -->
     <section class="dashboard-grid">
 
-      <!-- Tabla de desempeño por trabajador -->
+      <!-- Tabla Desempeño por Trabajador -->
       <article class="panel">
         <div class="panel-head">
-          <h2>&#128100; Desempe&ntilde;o por Trabajador</h2>
-          <span class="contador" id="contTrabajadores">0 trabajadores</span>
+          <h2>&#128100; Desempeño por Trabajador (Hoy)</h2>
+          <span class="contador" id="contTrabajadores">0 activos</span>
         </div>
         <div class="table-wrap">
-          <table id="tablaDesempeno">
+          <table>
             <thead>
               <tr>
-                <th style="width:34%">Trabajador</th>
-                <th style="width:14%">Operaciones</th>
-                <th style="width:14%">Entradas</th>
-                <th style="width:14%">Salidas</th>
-                <th style="width:24%">&Uacute;ltimo Movimiento</th>
+                <th>Trabajador</th>
+                <th>Total Ops</th>
+                <th>Entradas</th>
+                <th>Salidas</th>
+                <th>Último Movimiento</th>
               </tr>
             </thead>
             <tbody id="tbodyDesempeno"></tbody>
           </table>
         </div>
-        <div id="emptyDesempeno" class="empty">Sin movimientos registrados hoy.</div>
+        <div id="emptyDesempeno" class="empty">Sin movimientos registrados hoy por trabajadores.</div>
       </article>
 
-      <!-- Feed de movimientos en tiempo real -->
+      <!-- Feed de Movimientos en Tiempo Real -->
       <article class="panel">
         <div class="panel-head">
-          <h2>&#128247; Feed de Movimientos en Tiempo Real</h2>
+          <h2>&#9889; Feed de Movimientos en Tiempo Real</h2>
           <span class="contador" id="contFeed">0 eventos</span>
         </div>
         <div id="feedMovimientos" class="feed-list"></div>
-        <div id="feedEmpty" class="empty oculto">Sin movimientos en el historial.</div>
+        <div id="feedEmpty" class="empty oculto">No hay movimientos registrados hoy.</div>
       </article>
 
     </section>
+
+    <!-- ===== INVENTARIO CON FILTROS Y BUSCADOR ===== -->
+    <section class="panel-full">
+      <div class="panel-head">
+        <h2>&#128450; Inventario de Insumos Clínicos</h2>
+        <span class="contador" id="contInventario">0 productos</span>
+      </div>
+      <div class="toolbar">
+        <div class="search-box">
+          <span class="search-icon">&#128269;</span>
+          <input type="text" id="inputBuscar" aria-label="Buscar insumos" placeholder="Buscar por nombre, SKU o ubicación..." oninput="filtrarInventario()">
+        </div>
+        <div class="filters" id="filtroCategorias">
+          <button class="filter-btn active" onclick="setCategoria('TODOS', this)">Todos</button>
+          <button class="filter-btn" onclick="setCategoria('PROTECCION', this)">Protección</button>
+          <button class="filter-btn" onclick="setCategoria('DESCARTABLES', this)">Descartables</button>
+          <button class="filter-btn" onclick="setCategoria('CURACION', this)">Curación</button>
+          <button class="filter-btn" onclick="setCategoria('EQUIPAMIENTO', this)">Equipamiento</button>
+          <button class="filter-btn" onclick="setCategoria('MEDICAMENTOS', this)">Medicamentos</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>SKU / ID</th>
+              <th>Insumo</th>
+              <th>Categoría</th>
+              <th>Disponible</th>
+              <th>Unidad</th>
+              <th>Mín.</th>
+              <th>Ubicación</th>
+              <th>Estado Stock</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyInventario"></tbody>
+        </table>
+      </div>
+      <div id="emptyInventario" class="empty oculto">No se encontraron insumos que coincidan con la búsqueda.</div>
+    </section>
+
   </div>
 
   <footer>
-    <div id="ultimaSync">&u00daltima sincronizaci&oacute;n: —</div>
-    <div class="separador" aria-hidden="true"></div>
-    <div>Cappucare Backend &bull; Actualizaci&oacute;n autom&aacute;tica cada 2 segundos</div>
+    <div id="ultimaSync">Última sincronización: —</div>
+    <div class="separador"></div>
+    <div>Cappucare Backend &bull; Actualización automática cada 2 segundos</div>
   </footer>
 
   <script>
     /* ============================
-       Live Admin Dashboard — Cappucare
-       Dark Glassmorphism | No modifica endpoints REST existentes.
+       Cappucare — Dashboard Clínico en Tiempo Real
        ============================ */
     (function(){
       const API_PRODUCTOS = '/api/productos';
       const API_MOVIMIENTOS = '/api/movimientos';
       const POLL_MS = 2000;
 
-      // Estado
       let productos = [];
       let movimientos = [];
       let idsVistos = new Set();
+      let categoriaActual = 'TODOS';
+      let textoBusqueda = '';
 
-      // Elementos DOM
       const els = {
         totalProductos: document.getElementById('kpiTotalProductos'),
         movimientosHoy: document.getElementById('kpiMovimientosHoy'),
         stockBajo: document.getElementById('kpiStockBajo'),
         distribucion: document.getElementById('kpiDistribucion'),
-        barraProgreso: document.getElementById('barraProgreso'),
         segEntradas: document.getElementById('segEntradas'),
         segSalidas: document.getElementById('segSalidas'),
         lblEntradas: document.getElementById('lblEntradas'),
@@ -462,12 +639,16 @@
         feedMovimientos: document.getElementById('feedMovimientos'),
         feedEmpty: document.getElementById('feedEmpty'),
         contFeed: document.getElementById('contFeed'),
+        tbodyInventario: document.getElementById('tbodyInventario'),
+        contInventario: document.getElementById('contInventario'),
+        emptyInventario: document.getElementById('emptyInventario'),
+        inputBuscar: document.getElementById('inputBuscar'),
         dotEstado: document.getElementById('dotEstado'),
         txtEstado: document.getElementById('txtEstado'),
         ultimaSync: document.getElementById('ultimaSync'),
       };
 
-      /* ---------- Utilidades ---------- */
+      /* ---------- Utilidades de Fecha y Usuario ---------- */
       function parseFecha(ts){
         if (ts == null || ts === '') return null;
         if (ts instanceof Date) return isNaN(ts.getTime()) ? null : ts;
@@ -524,31 +705,18 @@
         if (conectado){
           els.dotEstado.classList.remove('off');
           els.txtEstado.textContent = 'Conectado al servidor';
-          els.dotEstado.title = 'online';
         } else {
           els.dotEstado.classList.add('off');
-          els.txtEstado.textContent = 'Sin conexi&oacute;n — reintentando';
-          els.txtEstado.title = 'offline';
+          els.txtEstado.textContent = 'Sin conexión — reintentando';
         }
       }
 
       function setUltimaSync(){
         const ahora = new Date();
-        els.ultimaSync.textContent = '&u00daltima sincronizaci&oacute;n: ' +
-          ahora.toLocaleString('es-ES', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        els.ultimaSync.textContent = 'Última sincronización: ' +
+          ahora.toLocaleString('es-ES', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit'});
       }
 
-      function debugDatos(tag, productos, movimientos){
-        if (window.__cappucareDebug !== true) return;
-        console.log(`[Cappucare Debug] ${tag}:`, {
-          totalProductos: productos.length,
-          totalMovimientos: movimientos.length,
-          muestraMovimiento: movimientos[0] || null,
-          usuarios: [...new Set(movimientos.map(m => obtenerNombreUsuario(m)))],
-        });
-      }
-
-      /* ---------- Escape HTML ---------- */
       function escapeHtml(txt){
         if (txt == null) return '';
         const div = document.createElement('div');
@@ -556,6 +724,7 @@
         return div.innerHTML;
       }
 
+      /* ---------- Creación de Elemento de Feed sin parpadeos ---------- */
       function crearMovItemElement(m, esNuevo){
         const div = document.createElement('div');
         div.className = 'mov-item' + (esNuevo ? ' entrar-anim nuevo' : '');
@@ -563,21 +732,21 @@
 
         const tipoStr = m.tipo ? String(m.tipo).toUpperCase() : '';
         const esIngreso = tipoStr === 'INGRESO';
-        const icono = esIngreso ? '&#127794;' : '&#128308;';
+        const icono = esIngreso ? '&#127809;' : '&#128308;';
         const claseTipo = esIngreso ? 'badge-ing' : 'badge-sal';
         const textoTipo = esIngreso ? 'Ingreso' : 'Salida';
         const prodId = escapeHtml(m.productoId || '—');
-        const prodNombre = escapeHtml(m.productoNombre || 'Producto sin nombre');
-        const motivo = escapeHtml(m.motivo || '—');
+        const prodNombre = escapeHtml(m.productoNombre || 'Insumo clínico');
+        const cantidad = escapeHtml(m.cantidad || 0);
         const usuario = escapeHtml(obtenerNombreUsuario(m));
 
         div.innerHTML = `
           <div class="mov-id">#${m.id}</div>
           <div>
-            <div class="mov-prod">${prodNombre}<span class="mov-prod-id">ID ${prodId}</span></div>
+            <div class="mov-prod">${prodNombre}</div>
+            <span class="mov-prod-id">SKU: ${prodId}</span>
           </div>
-          <div class="mov-cant">${m.cantidad}</div>
-          <div class="mov-motivo">${motivo}</div>
+          <div class="mov-cant num ${esIngreso ? 'num-ing' : 'num-sal'}">${esIngreso ? '+' : '-'}${cantidad}</div>
           <div>
             <div class="mov-user">${usuario}</div>
             <span class="badge-tipo ${claseTipo}">${icono} ${textoTipo}</span>
@@ -586,14 +755,65 @@
         `;
 
         if (esNuevo) {
-          setTimeout(() => { div.classList.remove('entrar-anim'); }, 450);
+          setTimeout(() => { div.classList.remove('entrar-anim'); }, 400);
           setTimeout(() => { div.classList.remove('nuevo'); }, 2000);
         }
 
         return div;
       }
 
-      /* ---------- Cálculos ---------- */
+      /* ---------- Filtros de Inventario ---------- */
+      window.setCategoria = function(cat, btn){
+        categoriaActual = cat;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderInventario();
+      };
+
+      window.filtrarInventario = function(){
+        textoBusqueda = els.inputBuscar.value.toLowerCase().trim();
+        renderInventario();
+      };
+
+      function renderInventario(){
+        const tbody = els.tbodyInventario;
+        const filtrados = productos.filter(p => {
+          const matchCat = (categoriaActual === 'TODOS' || p.categoria === categoriaActual);
+          const matchText = !textoBusqueda ||
+            (p.nombre && p.nombre.toLowerCase().includes(textoBusqueda)) ||
+            (p.id && p.id.toLowerCase().includes(textoBusqueda)) ||
+            (p.ubicacion && p.ubicacion.toLowerCase().includes(textoBusqueda));
+          return matchCat && matchText;
+        });
+
+        els.contInventario.textContent = filtrados.length + ' productos';
+        if (filtrados.length === 0) {
+          tbody.innerHTML = '';
+          els.emptyInventario.classList.remove('oculto');
+          return;
+        }
+        els.emptyInventario.classList.add('oculto');
+
+        tbody.innerHTML = filtrados.map(p => {
+          const disp = p.cantidadDisponible ?? 0;
+          const min = p.stockMinimo ?? 0;
+          const esBajo = disp <= min;
+          return `
+            <tr>
+              <td><span class="num">${escapeHtml(p.id)}</span></td>
+              <td><strong>${escapeHtml(p.nombre)}</strong></td>
+              <td>${escapeHtml(p.categoria)}</td>
+              <td><span class="num" style="font-size:14px;">${disp}</span></td>
+              <td>${escapeHtml(p.unidadMedida)}</td>
+              <td><span class="num">${min}</span></td>
+              <td>${escapeHtml(p.ubicacion)}</td>
+              <td><span class="stock-badge ${esBajo ? 'stock-bajo' : 'stock-ok'}">${esBajo ? '⚠️ Stock Bajo' : '✓ Óptimo'}</span></td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      /* ---------- Cálculos y Render General ---------- */
       function calcular(){
         const totalProductos = productos.length;
         const stockBajo = productos.filter(p =>
@@ -602,18 +822,14 @@
         ).length;
 
         const hoy = movimientos.filter(m => esHoy(m.fechaHora));
+        const totalHoy = hoy.length;
 
-        // Fallback: si no hay de hoy, usar los últimos 50 para que el desempeño no quede vacío
-        const paraDesempeño = hoy.length > 0 ? hoy : movimientos.slice().sort((a,b) => (parseFecha(b.fechaHora)?.getTime()||0) - (parseFecha(a.fechaHora)?.getTime()||0)).slice(0, 50);
-        const paraFeed = hoy;
+        const entradas = hoy.filter(m => m.tipo && String(m.tipo).toUpperCase() === 'INGRESO').length;
+        const salidas = hoy.filter(m => m.tipo && String(m.tipo).toUpperCase() === 'SALIDA').length;
 
-        const totalHoy = paraFeed.length;
-        const entradas = paraFeed.filter(m => m.tipo && String(m.tipo).toUpperCase() === 'INGRESO').length;
-        const salidas = paraFeed.filter(m => m.tipo && String(m.tipo).toUpperCase() === 'SALIDA').length;
-
-        // Desempeño por trabajador
+        // Desempeño por trabajador (hoy)
         const porTrabajador = new Map();
-        paraDesempeño.forEach(m => {
+        hoy.forEach(m => {
           const u = obtenerNombreUsuario(m);
           if (!porTrabajador.has(u)) {
             porTrabajador.set(u, { nombre: u, total: 0, entradas: 0, salidas: 0, ultimo: null });
@@ -623,6 +839,7 @@
           const tipoUpper = m.tipo ? String(m.tipo).toUpperCase() : '';
           if (tipoUpper === 'INGRESO') e.entradas += 1;
           else e.salidas += 1;
+
           const tsM = parseFecha(m.fechaHora)?.getTime() || 0;
           const tsUltimo = e.ultimo ? (parseFecha(e.ultimo.fechaHora)?.getTime() || 0) : 0;
           if (e.ultimo == null || tsM > tsUltimo) {
@@ -632,7 +849,6 @@
         const desempeño = Array.from(porTrabajador.values())
           .sort((a,b) => b.total - a.total || ((parseFecha(b.ultimo?.fechaHora)?.getTime()||0) - (parseFecha(a.ultimo?.fechaHora)?.getTime()||0)));
 
-        // Distribución %
         let pEntradas = 0, pSalidas = 0;
         if (totalHoy > 0) {
           pEntradas = Math.round((entradas / totalHoy) * 100);
@@ -646,62 +862,50 @@
           totalProductos, stockBajo,
           totalHoy, entradas, salidas,
           pEntradas, pSalidas,
-          desempeño, hoy: paraFeed
+          desempeño, hoy
         };
       }
 
-      /* ---------- Render ---------- */
       function render(){
         try {
           const c = calcular();
 
           // KPIs
-          if (els.totalProductos.textContent !== String(c.totalProductos)) {
-            els.totalProductos.textContent = c.totalProductos;
-          }
-          if (els.movimientosHoy.textContent !== String(c.totalHoy)) {
-            els.movimientosHoy.textContent = c.totalHoy;
-          }
-          if (els.stockBajo.textContent !== String(c.stockBajo)) {
-            els.stockBajo.textContent = c.stockBajo;
-          }
-          if (c.stockBajo > 0) els.stockBajo.classList.add('valor-bajo');
-          else els.stockBajo.classList.remove('valor-bajo');
+          if (els.totalProductos.textContent !== String(c.totalProductos)) els.totalProductos.textContent = c.totalProductos;
+          if (els.movimientosHoy.textContent !== String(c.totalHoy)) els.movimientosHoy.textContent = c.totalHoy;
+          if (els.stockBajo.textContent !== String(c.stockBajo)) els.stockBajo.textContent = c.stockBajo;
 
-          // Distribución (tarjeta 4)
+          // Tarjeta 4: Distribución
           if (c.totalHoy > 0) {
-            els.distribucion.textContent = c.totalHoy + ' operaciones';
+            els.distribucion.textContent = `${c.entradas} Ing. / ${c.salidas} Sal.`;
             els.segEntradas.style.width = c.pEntradas + '%';
             els.segSalidas.style.width = c.pSalidas + '%';
-            els.lblEntradas.textContent = 'Entradas ' + c.pEntradas + '%';
-            els.lblSalidas.textContent = 'Salidas ' + c.pSalidas + '%';
+            els.lblEntradas.textContent = `Entradas ${c.pEntradas}%`;
+            els.lblSalidas.textContent = `Salidas ${c.pSalidas}%`;
           } else {
-            els.distribucion.textContent = '—';
+            els.distribucion.textContent = 'Sin actividad hoy';
             els.segEntradas.style.width = '0%';
             els.segSalidas.style.width = '0%';
             els.lblEntradas.textContent = 'Entradas 0%';
             els.lblSalidas.textContent = 'Salidas 0%';
           }
 
-          // Tabla de desempeño
-          const tbody = els.tbodyDesempeno;
+          // Tabla Desempeño
+          const tbodyDes = els.tbodyDesempeno;
           if (c.desempeño.length === 0) {
-            if (tbody.children.length > 0) tbody.innerHTML = '';
+            if (tbodyDes.children.length > 0) tbodyDes.innerHTML = '';
             els.emptyDesempeno.classList.remove('oculto');
-            els.contTrabajadores.textContent = '0 trabajadores';
+            els.contTrabajadores.textContent = '0 activos';
           } else {
             els.emptyDesempeno.classList.add('oculto');
-            els.contTrabajadores.textContent = c.desempeño.length + ' trabajadores';
-            const filasActuales = Array.from(tbody.children);
+            els.contTrabajadores.textContent = c.desempeño.length + ' activos';
+            const filasActuales = Array.from(tbodyDes.children);
             c.desempeño.forEach((e, idx) => {
               const tipoStr = e.ultimo && e.ultimo.tipo ? String(e.ultimo.tipo).toUpperCase() : '';
               const tipoUltimo = tipoStr === 'INGRESO' ? 'ing' : (tipoStr === 'SALIDA' ? 'sal' : '');
               const horaUltimo = e.ultimo ? formatearHoraCorto(e.ultimo.fechaHora) : '—';
               const htmlFila = `
-                <td>
-                  <div class="trabajador">${escapeHtml(e.nombre)}</div>
-                  <span class="area">${tipoUltimo ? (tipoUltimo==='ing'?'&Uacute;ltimo: Ingreso':'&Uacute;ltimo: Salida') : '—'}</span>
-                </td>
+                <td><strong>${escapeHtml(e.nombre)}</strong></td>
                 <td><span class="num">${e.total}</span></td>
                 <td><span class="num num-ing">${e.entradas}</span></td>
                 <td><span class="num num-sal">${e.salidas}</span></td>
@@ -714,15 +918,15 @@
               } else {
                 const tr = document.createElement('tr');
                 tr.innerHTML = htmlFila;
-                tbody.appendChild(tr);
+                tbodyDes.appendChild(tr);
               }
             });
-            while (tbody.children.length > c.desempeño.length) {
-              tbody.removeChild(tbody.lastChild);
+            while (tbodyDes.children.length > c.desempeño.length) {
+              tbodyDes.removeChild(tbodyDes.lastChild);
             }
           }
 
-          // Feed de movimientos (solo hoy, más recientes primero)
+          // Feed de Movimientos (Actualización incremental sin parpadeos)
           const feed = els.feedMovimientos;
           const hoyOrdenado = c.hoy.slice().sort((a,b) => (parseFecha(b.fechaHora)?.getTime()||0) - (parseFecha(a.fechaHora)?.getTime()||0));
 
@@ -730,75 +934,64 @@
             if (feed.children.length > 0) feed.innerHTML = '';
             els.feedEmpty.classList.remove('oculto');
             els.contFeed.textContent = '0 eventos';
-            return;
-          }
-          els.feedEmpty.classList.add('oculto');
-          els.contFeed.textContent = hoyOrdenado.length + ' eventos';
+          } else {
+            els.feedEmpty.classList.add('oculto');
+            els.contFeed.textContent = hoyOrdenado.length + ' eventos';
 
-          // Actualización incremental del DOM para evitar parpadeos
-          const existingMap = new Map();
-          Array.from(feed.children).forEach(child => {
-            const id = child.getAttribute('data-id');
-            if (id) existingMap.set(id, child);
-          });
+            const existingMap = new Map();
+            Array.from(feed.children).forEach(child => {
+              const id = child.getAttribute('data-id');
+              if (id) existingMap.set(id, child);
+            });
 
-          hoyOrdenado.forEach((m, idx) => {
-            const strId = String(m.id);
-            if (existingMap.has(strId)) {
-              const existingNode = existingMap.get(strId);
-              existingMap.delete(strId);
-              if (feed.children[idx] !== existingNode) {
-                feed.insertBefore(existingNode, feed.children[idx] || null);
+            hoyOrdenado.forEach((m, idx) => {
+              const strId = String(m.id);
+              if (existingMap.has(strId)) {
+                const existingNode = existingMap.get(strId);
+                existingMap.delete(strId);
+                if (feed.children[idx] !== existingNode) {
+                  feed.insertBefore(existingNode, feed.children[idx] || null);
+                }
+              } else {
+                const esNuevo = !idsVistos.has(m.id);
+                const newNode = crearMovItemElement(m, esNuevo);
+                feed.insertBefore(newNode, feed.children[idx] || null);
               }
-            } else {
-              const esNuevo = !idsVistos.has(m.id);
-              const newNode = crearMovItemElement(m, esNuevo);
-              feed.insertBefore(newNode, feed.children[idx] || null);
-            }
-          });
+            });
 
-          // Eliminar del DOM los elementos obsoletos
-          existingMap.forEach(node => node.remove());
+            existingMap.forEach(node => node.remove());
+          }
 
-          // Registrar IDs como vistos
           hoyOrdenado.forEach(m => idsVistos.add(m.id));
 
-          // Eliminar la clase 'nuevo' tras la animación inicial
-          setTimeout(()=>{
-            feed.querySelectorAll('.mov-item.nuevo').forEach(el=>{
-              el.classList.remove('nuevo');
-            });
-          }, 1800);
+          // Renderizar inventario filtrado
+          renderInventario();
 
         } catch (err){
           console.error('[Cappucare Dashboard] Error en render():', err);
-          const tbody = els.tbodyDesempeno;
-          tbody.innerHTML = '<tr><td colspan="5" style="color:var(--rojo-alerta-neon);text-align:center;padding:20px;">Error renderizando desempeño: ' + escapeHtml(err.message) + '</td></tr>';
-          els.emptyDesempeno.classList.add('oculto');
         }
       }
 
-      /* ---------- Polling ---------- */
+      /* ---------- Polling de Datos ---------- */
       async function cargarDatos(){
         try {
           const [respP, respM] = await Promise.all([
             fetch(API_PRODUCTOS, {cache:'no-store'}),
             fetch(API_MOVIMIENTOS, {cache:'no-store'})
           ]);
-          if (!respP.ok || !respM.ok) throw new Error('Respuesta no OK');
+          if (!respP.ok || !respM.ok) throw new Error('Error al conectar con la API');
           productos = await respP.json();
           movimientos = await respM.json();
-          debugDatos('cargarDatos', productos, movimientos);
           setEstado(true);
           setUltimaSync();
           render();
         } catch (err){
-          console.error('[Cappucare Dashboard] Error cargando datos:', err);
+          console.error('[Cappucare Dashboard] Error de red:', err);
           setEstado(false);
         }
       }
 
-      // Inicio
+      // Inicialización y bucle automático cada 2 segundos
       cargarDatos();
       setInterval(cargarDatos, POLL_MS);
 
