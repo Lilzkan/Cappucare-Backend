@@ -421,6 +421,17 @@
     border-color: var(--verde-bosque);
   }
 
+  .filter-btn-alerta {
+    color: var(--rojo-alerta);
+    border-color: #FCA5A5;
+    background-color: var(--rojo-fondo);
+  }
+  .filter-btn-alerta:hover, .filter-btn-alerta.active {
+    background-color: var(--rojo-alerta) !important;
+    color: var(--blanco) !important;
+    border-color: var(--rojo-alerta) !important;
+  }
+
   .stock-badge {
     display: inline-block;
     padding: 3px 8px;
@@ -499,11 +510,11 @@
         <span class="kpi-sub">Transacciones de entradas y salidas</span>
       </div>
 
-      <div class="card">
+      <div class="card" style="cursor:pointer;" onclick="filtrarStockBajoCard()" title="Ver insumos con stock bajo o agotado">
         <span class="kpi-tag">&#9888;&#65039; Alertas</span>
         <div class="kpi-label" style="font-size:12px; color:var(--texto-secundario); font-weight:600;">Stock Bajo</div>
         <div class="kpi-value alerta" id="kpiStockBajo">0</div>
-        <span class="kpi-sub">Insumos con cantidad &le; mínimo</span>
+        <span class="kpi-sub">Haz clic para ver insumos sin stock</span>
       </div>
 
       <div class="card">
@@ -579,6 +590,7 @@
           <button class="filter-btn" onclick="setCategoria('CURACION', this)">Curación</button>
           <button class="filter-btn" onclick="setCategoria('EQUIPAMIENTO', this)">Equipamiento</button>
           <button class="filter-btn" onclick="setCategoria('MEDICAMENTOS', this)">Medicamentos</button>
+          <button class="filter-btn filter-btn-alerta" id="btnStockBajo" onclick="setCategoria('STOCK_BAJO', this)">⚠️ Sin / Bajo Stock</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -766,8 +778,15 @@
       window.setCategoria = function(cat, btn){
         categoriaActual = cat;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        if (btn) btn.classList.add('active');
         renderInventario();
+      };
+
+      window.filtrarStockBajoCard = function(){
+        const btn = document.getElementById('btnStockBajo');
+        if (btn) window.setCategoria('STOCK_BAJO', btn);
+        const sec = document.querySelector('.panel-full');
+        if (sec) sec.scrollIntoView({ behavior: 'smooth' });
       };
 
       window.filtrarInventario = function(){
@@ -778,7 +797,11 @@
       function renderInventario(){
         const tbody = els.tbodyInventario;
         const filtrados = productos.filter(p => {
-          const matchCat = (categoriaActual === 'TODOS' || p.categoria === categoriaActual);
+          const disp = p.cantidadDisponible ?? 0;
+          const min = p.stockMinimo ?? 0;
+          const matchCat = (categoriaActual === 'TODOS') ? true :
+                           (categoriaActual === 'STOCK_BAJO' || categoriaActual === 'SIN_STOCK') ? (disp <= min) :
+                           (p.categoria === categoriaActual);
           const matchText = !textoBusqueda ||
             (p.nombre && p.nombre.toLowerCase().includes(textoBusqueda)) ||
             (p.id && p.id.toLowerCase().includes(textoBusqueda)) ||
