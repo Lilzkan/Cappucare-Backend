@@ -1,24 +1,74 @@
 package com.cappucare.backend.config;
 
 import com.cappucare.backend.model.Categoria;
+import com.cappucare.backend.model.Movimiento;
 import com.cappucare.backend.model.Producto;
+import com.cappucare.backend.model.TipoMovimiento;
+import com.cappucare.backend.repository.MovimientoRepository;
 import com.cappucare.backend.repository.ProductoRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Configuration
 public class DataLoader {
 
     @Bean
     @Profile("!test")
-    CommandLineRunner init(ProductoRepository productoRepository) {
+    CommandLineRunner init(ProductoRepository productoRepository,
+                          MovimientoRepository movimientoRepository) {
         return args -> {
             if (productoRepository.count() == 0) {
                 productoRepository.saveAll(cargarInsumosBase());
             }
+            if (movimientoRepository.count() == 0) {
+                movimientoRepository.saveAll(cargarMovimientosBase());
+            }
         };
+    }
+
+    private List<Movimiento> cargarMovimientosBase() {
+        List<Movimiento> movs = new ArrayList<>();
+        long ahora = System.currentTimeMillis();
+
+        Movimiento m1 = new Movimiento();
+        m1.setProductoId("MED-101");
+        m1.setProductoNombre("Mascarilla Quirúrgica N95");
+        m1.setTipo(TipoMovimiento.INGRESO);
+        m1.setCantidad(10);
+        m1.setMotivo("Recepción Almacén General");
+        m1.setFechaHora(ahora - 1000 * 60 * 30);
+        m1.setUsuarioResponsable("Juan Pérez");
+        m1.setSincronizado(true);
+        movs.add(m1);
+
+        Movimiento m2 = new Movimiento();
+        m2.setProductoId("MED-102");
+        m2.setProductoNombre("Alcohol Gel 70% 500ml");
+        m2.setTipo(TipoMovimiento.SALIDA);
+        m2.setCantidad(5);
+        m2.setMotivo("Solicitud Pabellón A");
+        m2.setFechaHora(ahora - 1000 * 60 * 15);
+        m2.setUsuarioResponsable("Paz Morales");
+        m2.setSincronizado(true);
+        movs.add(m2);
+
+        Movimiento m3 = new Movimiento();
+        m3.setProductoId("MED-107");
+        m3.setProductoNombre("Solución Salina 0.9% 500ml");
+        m3.setTipo(TipoMovimiento.INGRESO);
+        m3.setCantidad(20);
+        m3.setMotivo("Reposición Farmacia Clínico");
+        m3.setFechaHora(ahora - 1000 * 60 * 5);
+        m3.setUsuarioResponsable("Carlos López");
+        m3.setSincronizado(true);
+        movs.add(m3);
+
+        return movs;
     }
 
     private java.util.List<Producto> cargarInsumosBase() {
