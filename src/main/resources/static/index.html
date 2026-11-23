@@ -601,6 +601,7 @@
       </div>
     </div>
     <div class="meta-top">
+      <button class="btn-secondary" id="btnSimuladorBots" onclick="toggleSimuladorBots()" title="Iniciar/Detener bot de trabajadores simulando peticiones al azar">🤖 Simular Bots</button>
       <button class="btn-primary" onclick="abrirModalMovimiento()">&#43; Registrar Movimiento</button>
       <span class="live-badge"><span class="dot-live"></span> EN VIVO</span>
       <div class="status-pill">
@@ -818,6 +819,105 @@
         txtEstado: document.getElementById('txtEstado'),
         ultimaSync: document.getElementById('ultimaSync'),
       };
+
+      /* ---------- Simulador de Bots de Trabajadores ---------- */
+      let botInterval = null;
+      const TRABAJADORES_SIMULADOS = [
+        "Juan Pérez", "Paz Morales", "Carlos López",
+        "María González", "Diego Silva", "Elena Rojas", "Ana Martínez"
+      ];
+
+      window.toggleSimuladorBots = function(){
+        const btn = document.getElementById('btnSimuladorBots');
+        if (botInterval) {
+          clearInterval(botInterval);
+          botInterval = null;
+          if (btn) {
+            btn.innerHTML = '🤖 Simular Bots';
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+          }
+          console.log('[Cappucare Bots] Simulación detenida.');
+        } else {
+          botInterval = setInterval(ejecutarTransaccionBot, 2500);
+          if (btn) {
+            btn.innerHTML = '⏹️ Detener Bots';
+            btn.style.backgroundColor = 'var(--rojo-alerta)';
+            btn.style.color = 'var(--blanco)';
+          }
+          console.log('[Cappucare Bots] Simulación iniciada.');
+          ejecutarTransaccionBot();
+        }
+      };
+
+      async function ejecutarTransaccionBot(){
+        if (!productos || productos.length === 0) return;
+
+        // 1. Elegir un producto al azar
+        const prod = productos[Math.floor(Math.random() * productos.length)];
+        const disp = prod.cantidadDisponible ?? 0;
+        const min = prod.stockMinimo ?? 0;
+
+        // 2. Determinar tipo de movimiento inteligente (Protección contra desabastecimiento)
+        // Si el stock está bajo o crítico (disp <= min + 3), FORZAR INGRESO para reponer
+        let tipo = 'INGRESO';
+        if (disp > min + 5) {
+          tipo = Math.random() < 0.65 ? 'SALIDA' : 'INGRESO';
+        } else {
+          tipo = 'INGRESO';
+        }
+
+        // 3. Cantidad aleatoria controlada
+        let cantidad = 1;
+        if (tipo === 'SALIDA') {
+          const maxSalida = Math.min(3, Math.max(1, disp - min));
+          cantidad = Math.floor(Math.random() * maxSalida) + 1;
+        } else {
+          cantidad = Math.floor(Math.random() * 8) + 5;
+        }
+
+        if (tipo === 'SALIDA' && disp - cantidad < 0) return;
+
+        // 4. Elegir trabajador y motivo aleatorio
+        const usuario = TRABAJADORES_SIMULADOS[Math.floor(Math.random() * TRABAJADORES_SIMULADOS.length)];
+        const motivosIngreso = [
+          "Recepción Almacén Cappucare",
+          "Lote Reposición Semanal",
+          "Carga de Inventario Central",
+          "Ingreso Insumos de Farmacia"
+        ];
+        const motivosSalida = [
+          "Solicitud Pabellón A",
+          "Atención Paciente Ambulatorio",
+          "Despacho Urgencias",
+          "Uso Clínico en Consulta",
+          "Entrega Box Médico"
+        ];
+        const motivo = (tipo === 'INGRESO')
+          ? motivosIngreso[Math.floor(Math.random() * motivosIngreso.length)]
+          : motivosSalida[Math.floor(Math.random() * motivosSalida.length)];
+
+        // 5. Enviar transacción a /api/movimientos
+        try {
+          const resp = await fetch(API_MOVIMIENTOS, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              productoId: prod.id,
+              tipo: tipo,
+              cantidad: cantidad,
+              usuarioResponsable: usuario,
+              motivo: motivo + ' (Bot Simulado)'
+            })
+          });
+          if (resp.ok) {
+            console.log(`[Cappucare Bot] Transacción: ${usuario} -> ${tipo} ${cantidad}x ${prod.nombre}`);
+            cargarDatos();
+          }
+        } catch (err) {
+          console.error('[Cappucare Bot] Error enviando transacción:', err);
+        }
+      }
 
       /* ---------- Utilidades de Fecha y Usuario ---------- */
       function parseFecha(ts){
