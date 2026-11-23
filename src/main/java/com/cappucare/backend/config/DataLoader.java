@@ -74,6 +74,29 @@ public class DataLoader {
     private java.util.List<Producto> cargarInsumosBase() {
         java.util.List<Producto> insumos = new java.util.ArrayList<>();
 
+        // Productos oficiales Cappucare
+        insumos.add(new Producto(
+                "CAP-201", "Cinturón Masajeador Menstrual Térmico",
+                "Dispositivo inalámbrico de termoterapia y masaje vibratorio para alivio del dolor.",
+                Categoria.PROTECCION, 25, "Unidad (Blanco/Rosa)", 10, "Vitrina Cappucare M-1", "Disponible", 1L));
+        insumos.add(new Producto(
+                "CAP-202", "Cinturón Masajeador Lumbar",
+                "Faja de compresión y masaje térmico lumbar para recuperación articular y dolor de espalda.",
+                Categoria.PROTECCION, 18, "Unidad", 8, "Vitrina Cappucare M-2", "Disponible", 1L));
+        insumos.add(new Producto(
+                "CAP-203", "Banda Smart Articular",
+                "Banda inteligente de soporte y termoterapia para articulaciones de rodilla y codo.",
+                Categoria.PROTECCION, 15, "Unidad", 5, "Vitrina Cappucare M-3", "Disponible", 1L));
+        insumos.add(new Producto(
+                "CAP-204", "Bolsa de Frío Instantáneo",
+                "Bolsa térmica de activación por presión para primeros auxilios y desinflamación.",
+                Categoria.DESCARTABLES, 150, "Unidad", 30, "Estante A-1", "Disponible", 1L));
+        insumos.add(new Producto(
+                "CAP-205", "Adhesivos para Heridas (Sutura Cutánea)",
+                "Tiras adhesivas estériles para cierre de heridas leves sin sutura quirúrgica.",
+                Categoria.CURACION, 80, "Caja (10 un)", 25, "Estante C-1", "Disponible", 1L));
+
+        // Insumos médicos complementarios
         insumos.add(new Producto(
                 "MED-101", "Mascarilla Quirúrgica N95",
                 "Mascarilla de alta filtración uso clínico",
